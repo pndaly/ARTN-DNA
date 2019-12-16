@@ -8,6 +8,15 @@ distribution for users of the ARTN who have requested data via the *Observation 
 * REQUIREMENT(s)
    - bash
    - Python3.7
+
+* SET UP:
+    ```bash
+     % cd /var/www/
+     % git clone https://github.com/pndaly/ARTN-DNA.git
+     % cd ARTN-DNA
+     % mkdir logs
+     % chown -R www-data:www-data /var/www/ARTN-DNA
+    ```
  
 * CRONTAB
     ```bash
