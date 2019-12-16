@@ -9,11 +9,6 @@
 # Date:        20190411
 # Execute:     % bash DNA.sh
 #
-# % crontab -l
-#   # +
-#   # at noon every day, set up new directory
-#   # -
-#   0 12 * * * bash /var/www/ARTN-DNA/cron/DNA.sh >> /var/www/ARTN-DNA/logs/DNA.log 2>&1
 # -
 
 

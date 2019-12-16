@@ -9,12 +9,6 @@
 # Date:        20190411
 # Execute:     % bash TGZ.sh [yyyymmdd] --help
 #
-# % crontab -l
-#   # +
-#   # at 8 am every day, create calibration tarballs
-#   # -
-#   0 8 * * * bash /var/www/ARTN-DNA/cron/TGZ.sh --iso=`date --date="yesterday" +\%Y\%m\%d` >> /var/www/ARTN-DNA/logs/TGZ.log 2>&1
-#
 # -
 
 
