@@ -4,7 +4,7 @@
 # +
 #
 # Name:        DNA.sh
-# Description: DNA set up
+# Description: DNA environment set up
 # Author:      Phil Daly (pndaly@email.arizona.edu)
 # Date:        20190411
 # Execute:     % bash DNA.sh [DNA_directory]
