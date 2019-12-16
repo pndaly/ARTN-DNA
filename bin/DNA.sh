@@ -9,12 +9,6 @@
 # Date:        20190411
 # Execute:     % bash DNA.sh --help
 #
-# % crontab -l
-# # between 5 pm and midnight, run DNA.sh at 07,12,17,22,27,32,37,42,47,52,57 minutes past every hour
-# 7-59/5 17-23 * * * bash /var/www/ARTN-DNA/bin/DNA.sh --gmail >> /var/www/ARTN-DNA/logs/DNA.log 2>&1
-# # between midnight and 7 am, run DNA.sh at 07,12,17,22,27,32,37,42,47,52,57 minutes past every hour for the previous day
-# 7-59/5 00-07 * * * bash /var/www/ARTN-DNA/bin/DNA.sh --iso=`date --date="yesterday" +\%Y\%m\%d` --gmail >> /var/www/ARTN-DNA/logs/DNA.log 2>&1
-#
 # -
 
 
