@@ -82,10 +82,10 @@ class DnaLogger(object):
 
         # noinspection PyBroadException
         try:
-            logfile = '/var/www/ARTN-DNA/logs/{}.log'.format(logname)
+            logfile = '{}/logs/{}.log'.format(os.getenv("DNA_LOGS", os.getcwd()), logname)
         except Exception:
             logfile = '{}/{}.log'.format(os.getcwd(), logname)
-        logconsole = '/tmp/{}.log'.format(logname)
+        logconsole = '/tmp/console-{}.log'.format(logname)
 
         utils_logger_dictionary = {
             'version': 1,
