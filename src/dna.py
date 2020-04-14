@@ -16,12 +16,14 @@ from src.models.Models import ObsReq, obsreq_filters, User, user_filters
 
 import argparse
 import json
+import itertools
 import logging
 import logging.config
 import os
 import pytz
 import re
 import smtplib
+import sys
 import tarfile
 
 
@@ -52,6 +54,19 @@ DNA_TIMEZONE = pytz.timezone('America/Phoenix')
 
 
 # +
+# dictionary(s)
+# -
+SUPPORTED = {
+    'Bok': ['90Prime', 'BCSpec'],
+    'Kuiper': ['Mont4k'],
+    'MMT': ['BinoSpec'],
+    'Vatt': ['Vatt4k']
+}
+TELESCOPES = [_k for _k in SUPPORTED]
+INSTRUMENTS = list(itertools.chain.from_iterable([_v for _k, _v in SUPPORTED.items()]))
+
+
+# +
 # get credential(s)
 # -
 DNA_DB_HOST = os.getenv("DNA_DB_HOST", os.getenv("ARTN_DB_HOST", None))
@@ -69,6 +84,7 @@ DNA_GMAIL_USER = os.getenv("MAIL_USERNAME", None)
 # +
 # class: DnaLogger()
 # -
+# noinspection PyBroadException
 class DnaLogger(object):
 
     # +
@@ -76,11 +92,9 @@ class DnaLogger(object):
     # -
     def __init__(self, name=''):
 
-        # variable(s)
         self.name = name
         logname = '{}'.format(self.__name)
 
-        # noinspection PyBroadException
         try:
             logfile = '{}/{}.log'.format(os.getenv("DNA_LOGS"), logname)
         except Exception:
@@ -149,7 +163,6 @@ class DnaLogger(object):
             }
         }
 
-        # configure and get logger
         logging.config.dictConfig(utils_logger_dictionary)
         self.logger = logging.getLogger(logname)
 
@@ -175,32 +188,34 @@ dna_log = DnaLogger('ARTN-DNA').logger
 # default(s)
 # -
 def_dna_iso = datetime.now(tz=DNA_TIMEZONE).isoformat().split('T')[0].replace('-', '')
-def_dna_fits = f'/data1/artn/rts2images/queue/{def_dna_iso}/C0'
-def_dna_json = f'{def_dna_fits}/.dna.json'
+def_dna_instrument = f'Mont4k'
+def_dna_data = f'/rts2data/Kuiper/Mont4k/{def_dna_iso}/object'
+def_dna_json = f'/rts2data/Kuiper/Mont4k/{def_dna_iso}/.dna.json'
+def_dna_object = f''
+def_dna_telescope = f'Kuiper'
+def_dna_user = f''
 
 
 # +
 # function: dna_artn_ids()
 # -
-def dna_artn_ids(_fits=''):
-    """ returns IDs from FITS headers or None """
-
+# noinspection PyBroadException
+def dna_artn_ids(_file=''):
+    """ returns IDs from FITS headers """
     # check input(s)
-    _gid, _oid, _tgt, _fits = '', '', '', os.path.abspath(os.path.expanduser(f'{_fits}'))
-    if not isinstance(_fits, str) or _fits.strip() == '' or not os.path.exists(f'{_fits}'):
-        dna_log.error(f'invalid input, _file={_fits}')
+    _gid, _oid, _tgt, _file = '', '', '', os.path.abspath(os.path.expanduser(f'{_file}'))
+    if not isinstance(_file, str) or _file.strip() == '' or not os.path.exists(f'{_file}'):
+        dna_log.error(f'invalid input, _file={_file}')
         return _gid, _oid, _tgt
-
-    # noinspection PyBroadException
+    # get header(s)
     try:
-        _hdulist = fits.open(f'{_fits}')
+        _hdulist = fits.open(f'{_file}')
         _gid = f"{_hdulist[0].header['ARTNGID']}"
         _oid = f"{_hdulist[0].header['ARTNOID']}"
         _tgt = f"{_hdulist[0].header['TARGET']}"
         _hdulist.close()
     except Exception as _e:
         dna_log.error(f'failed to get fits header(s), error={_e}')
-
     # return
     return _gid, _oid, _tgt
 
@@ -208,10 +223,9 @@ def dna_artn_ids(_fits=''):
 # +
 # function: dna_connect_database()
 # -
+# noinspection PyBroadException
 def dna_connect_database():
-    """ connect database """
-
-    # noinspection PyBroadException
+    """ return database session """
     try:
         engine = create_engine(
             f'postgresql+psycopg2://{DNA_DB_USER}:{DNA_DB_PASS}@{DNA_DB_HOST}:{DNA_DB_PORT}/{DNA_DB_NAME}')
@@ -225,10 +239,9 @@ def dna_connect_database():
 # +
 # function: dna_disconnect_database()
 # -
+# noinspection PyBroadException
 def dna_disconnect_database(_s=None):
-    """ disconnect database """
-
-    # noinspection PyBroadException
+    """ disconnect database session """
     try:
         if _s is not None:
             _s.close()
@@ -239,10 +252,9 @@ def dna_disconnect_database(_s=None):
 # +
 # function: dna_gmail_close()
 # -
+# noinspection PyBroadException
 def dna_gmail_close(_s=None):
     """ close gmail """
-
-    # noinspection PyBroadException
     try:
         if _s is not None:
             _s.quit()
@@ -253,10 +265,9 @@ def dna_gmail_close(_s=None):
 # +
 # function: dna_gmail_open()
 # -
+# noinspection PyBroadException
 def dna_gmail_open():
     """ open gmail """
-
-    # noinspection PyBroadException
     try:
         _s = smtplib.SMTP(DNA_GMAIL_HOST, DNA_GMAIL_PORT)
         _s.ehlo()
@@ -271,9 +282,9 @@ def dna_gmail_open():
 # +
 # function: dna_gmail_send()
 # -
+# noinspection PyBroadException
 def dna_gmail_send(_s=None, _to=None, _from='', _subject='', _text=''):
     """ send gmail """
-
     # check input(s)
     if _s is None:
         dna_log.error(f'invalid input, _s={_s}')
@@ -290,8 +301,7 @@ def dna_gmail_send(_s=None, _to=None, _from='', _subject='', _text=''):
     if not isinstance(_text, str) or _text.strip() == '':
         dna_log.error(f'invalid input, _text={_text}')
         return
-
-    # noinspection PyBroadException
+    # send gmail
     try:
         _tos = ', '.join([_n for _n in _to])
         _body = '\r\n'.join([f'To: {_tos}', f'From: {DNA_GMAIL_USER}', f'Subject: {_subject}', '',  f'{_text}'])
@@ -303,9 +313,9 @@ def dna_gmail_send(_s=None, _to=None, _from='', _subject='', _text=''):
 # +
 # function: dna_seek()
 # -
+# noinspection PyBroadException
 def dna_seek(_path='', _type=''):
     """ returns dictionary of {filename: size} for given type in path or {} """
-
     # check input(s)
     _path = os.path.abspath(os.path.expanduser(f'{_path}'))
     if not isinstance(_path, str) or _path.strip() == '' or not os.path.isdir(f'{_path}'):
@@ -314,15 +324,13 @@ def dna_seek(_path='', _type=''):
     if not isinstance(_type, str) or _type.strip() == '' or _type not in DNA_MONT4K_TYPES:
         dna_log.error(f'invalid input, _type={_type}')
         return {}
-
     # (clever) generator code (does nothing until called)
     _fw = (
         os.path.join(_root, _file)
         for _root, _dirs, _files in os.walk(os.path.abspath(os.path.expanduser(_path)))
         for _file in _files
     )
-
-    # noinspection PyBroadException
+    # return dictionary of results
     try:
         return {f'{_k}': os.stat(f'{_k}').st_size for _k in _fw if not os.path.islink(f'{_k}') and
                 os.path.exists(f'{_k}') and _k.endswith(f'{_type}')}
@@ -333,50 +341,91 @@ def dna_seek(_path='', _type=''):
 # +
 # function: dna()
 # -
-def dna(_dna_fits=def_dna_fits, _dna_json=def_dna_json, _dna_iso=def_dna_iso, _gmail=False):
+# noinspection PyBroadException
+def dna(_dna_data=def_dna_data, _dna_instrument=def_dna_instrument, _dna_iso=def_dna_iso, _dna_json=def_dna_json, 
+        _dna_object=def_dna_object, _dna_telescope=def_dna_telescope, _dna_user=def_dna_user, _gmail=False):
     """ finds data, tarballs it up and send the user a notification on location """
 
     # entry message
-    dna_log.info(f'dna(fits={_dna_fits}, json={_dna_json}, iso={_dna_iso}, gmail={_gmail}) ... entry')
+    dna_log.info(f'dna(data={_dna_data}, json={_dna_json}, instrument={_dna_instrument}, iso={_dna_iso}, object={_dna_object}, telescope={_dna_telescope}, user={_dna_user}, gmail={_gmail}) ... entry')
 
     # check input(s)
-    _dna_fits = os.path.abspath(os.path.expanduser(f'{_dna_fits}'))
-    if not isinstance(_dna_fits, str) or _dna_fits.strip() == '' or not os.path.isdir(f'{_dna_fits}'):
-        dna_log.error(f'invalid input, _dna_fits={_dna_fits}')
+    _dna_data = os.path.abspath(os.path.expanduser(f'{_dna_data}'))
+    if not isinstance(_dna_data, str) or _dna_data.strip() == '' or not os.path.isdir(f'{_dna_data}'):
+        dna_log.error(f'invalid input, _dna_data={_dna_data}')
         return
+    else:
+        dna_log.info(f'valid input, _dna_data={_dna_data}')
+
+    if not isinstance(_dna_instrument, str) or _dna_instrument.strip() == '' or _dna_instrument not in INSTRUMENTS:
+        dna_log.error(f'invalid input, _dna_instrument={_dna_instrument}')
+        return
+    else:
+        dna_log.info(f'valid input, _dna_instrument={_dna_instrument}')
+
+    if not isinstance(_dna_iso, str) or len(_dna_iso) != 8 or re.match(DNA_ISO_MATCH, _dna_iso) is None:
+        dna_log.error(f'invalid input, _dna_iso={_dna_iso}')
+        return
+    else:
+        dna_log.info(f'valid input, _dna_iso={_dna_iso}')
 
     _dna_json = os.path.abspath(os.path.expanduser(f'{_dna_json}'))
     if not isinstance(_dna_json, str) or _dna_json.strip() == '' or not os.path.isfile(f'{_dna_json}'):
         dna_log.error(f'invalid input, _dna_json={_dna_json}')
         return
+    else:
+        dna_log.info(f'valid input, _dna_json={_dna_json}')
 
-    if not isinstance(_dna_iso, str) or len(_dna_iso) != 8 or re.match(DNA_ISO_MATCH, _dna_iso) is None:
-        dna_log.error(f'invalid input, _dna_iso={_dna_iso}')
+    if not isinstance(_dna_object, str):
+        dna_log.error(f'invalid input, _dna_object={_dna_object}')
         return
+    else:
+        dna_log.info(f'valid input, _dna_object={_dna_object}')
+
+    if not isinstance(_dna_telescope, str) or _dna_telescope.strip() == '' or _dna_telescope not in TELESCOPES:
+        dna_log.error(f'invalid input, _dna_telescope={_dna_telescope}')
+        return
+    else:
+        dna_log.info(f'valid input, _dna_telescope={_dna_telescope}')
+
+    if not isinstance(_dna_user, str):
+        dna_log.error(f'invalid input, _dna_user={_dna_user}')
+        return
+    else:
+        dna_log.info(f'valid input, _dna_user={_dna_user}')
+
+    if f'{_dna_instrument}' not in SUPPORTED[f'{_dna_telescope}']:
+        dna_log.error(f'invalid combination, _dna_instrument={_dna_instrument}, _dna_telescope={_dna_telescope}')
+        return
+    else:
+        dna_log.info(f'valid combination, _dna_instrument={_dna_instrument}, _dna_telescope={_dna_telescope}')
 
     if not isinstance(_gmail, bool):
         _gmail = False
 
+
     # +
     # set up
     # -
-    dna_log.info(f'finding dark(s) tarballs')
-    _dgz = os.path.abspath(os.path.expanduser(f"{os.path.join(DNA_ARTN_TGZ_FILES, f'darks.{_dna_iso}.tgz')}"))
-    if os.path.exists(f'{_dgz}'):
-        dna_log.info(f'found {_dgz}')
-
-    dna_log.info(f'finding skyflat(s) tarballs')
-    _sfgz = os.path.abspath(os.path.expanduser(f"{os.path.join(DNA_ARTN_TGZ_FILES, f'skyflats.{_dna_iso}.tgz')}"))
-    if os.path.exists(f'{_sfgz}'):
-        dna_log.info(f'found {_sfgz}')
-
+    _tgzs = {
+        'bias': os.path.abspath(os.path.expanduser(os.path.join(DNA_ARTN_TGZ_FILES, f'bias.{_dna_iso}.tgz'))),
+        'calibration': os.path.abspath(os.path.expanduser(os.path.join(DNA_ARTN_TGZ_FILES, f'calibration.{_dna_iso}.tgz'))),
+        'dark': os.path.abspath(os.path.expanduser(os.path.join(DNA_ARTN_TGZ_FILES, f'dark.{_dna_iso}.tgz'))),
+        'darks': os.path.abspath(os.path.expanduser(os.path.join(DNA_ARTN_TGZ_FILES, f'darks.{_dna_iso}.tgz'))),
+        'flat': os.path.abspath(os.path.expanduser(os.path.join(DNA_ARTN_TGZ_FILES, f'flat.{_dna_iso}.tgz'))),
+        'focus': os.path.abspath(os.path.expanduser(os.path.join(DNA_ARTN_TGZ_FILES, f'focus.{_dna_iso}.tgz'))),
+        'skyflat': os.path.abspath(os.path.expanduser(os.path.join(DNA_ARTN_TGZ_FILES, f'skyflat.{_dna_iso}.tgz'))),
+        'skyflats': os.path.abspath(os.path.expanduser(os.path.join(DNA_ARTN_TGZ_FILES, f'skyflats.{_dna_iso}.tgz'))),
+        'standard': os.path.abspath(os.path.expanduser(os.path.join(DNA_ARTN_TGZ_FILES, f'standard.{_dna_iso}.tgz')))
+    }
+    dna_log.info(f'_tgzs={_tgzs}')
+    
     dna_log.info(f'connecting gmail')
     dna_gs = dna_gmail_open() if _gmail else None
 
     dna_log.info(f'connecting database')
     dna_db = dna_connect_database()
 
-    # noinspection PyBroadException
     try:
         dna_log.info(f'reading JSON')
         with open(f'{_dna_json}', 'r') as _fr:
@@ -384,7 +433,6 @@ def dna(_dna_fits=def_dna_fits, _dna_json=def_dna_json, _dna_iso=def_dna_iso, _g
     except Exception:
         dna_json = []
 
-    # get previously seen _gids
     dna_log.info(f'loading previous GIDs and OIDs')
     _gid_dict = {}
     for _e in dna_json:
@@ -397,7 +445,7 @@ def dna(_dna_fits=def_dna_fits, _dna_json=def_dna_json, _dna_iso=def_dna_iso, _g
     # +
     # process
     # -
-    _fits_dictionary = dna_seek(_dna_fits, 'fits')
+    _fits_dictionary = dna_seek(_dna_data, 'fits')
     if _fits_dictionary is None or _fits_dictionary is {}:
         dna_log.info(f'no files found for processing')
 
@@ -420,8 +468,7 @@ def dna(_dna_fits=def_dna_fits, _dna_json=def_dna_json, _dna_iso=def_dna_iso, _g
             if (isinstance(_gid, str) and _gid.strip() == '') or \
                (isinstance(_oid, str) and _oid.strip() == '') or \
                _size not in DNA_MONT4K_SIZES:
-                dna_log.warning(
-                    f'invalid headers or size, _file={_file}, _gid={_gid}, _oid={_oid}, _tgt={_tgt}, _size={_size}')
+                dna_log.error(f'invalid headers or size, _file={_file}, _gid={_gid}, _oid={_oid}, _tgt={_tgt}, _size={_size}')
                 continue
 
             # populate dictionary with this file
@@ -446,13 +493,11 @@ def dna(_dna_fits=def_dna_fits, _dna_json=def_dna_json, _dna_iso=def_dna_iso, _g
 
             # query obsreq database(s)
             _obsreq = None
-
-            # noinspection PyBroadException
             try:
                 _obsreq = dna_db.query(ObsReq)
                 _obsreq = obsreq_filters(_obsreq, {'group_id': f'{_gid}', 'observation_id': f'{_oid}'})
             except Exception as _e:
-                dna_log.warning(f'failed to query obsreq table, error={_e}')
+                dna_log.error(f'failed to query obsreq table, error={_e}')
                 continue
 
             # update record(s)
@@ -472,18 +517,16 @@ def dna(_dna_fits=def_dna_fits, _dna_json=def_dna_json, _dna_iso=def_dna_iso, _g
                         dna_db.commit()
                     except Exception as _e:
                         dna_db.rollback()
-                        dna_log.warning(f'failed to commit to obsreq table, error=_{_e}')
+                        dna_log.error(f'failed to commit to obsreq table, error=_{_e}')
                         continue
 
                     # get user/owner
                     _user = None
-
-                    # noinspection PyBroadException
                     try:
                         _user = dna_db.query(User)
                         _user = user_filters(_user, {'user_id': f'{_q.user_id}', 'username': f'{_q.username}'})
                     except Exception as e:
-                        dna_log.warning(f'failed to execute user query, error={e}')
+                        dna_log.error(f'failed to execute user query, error={e}')
                         continue
 
                     # gmail user
@@ -502,31 +545,36 @@ def dna(_dna_fits=def_dna_fits, _dna_json=def_dna_json, _dna_iso=def_dna_iso, _g
 
                         if _gmail:
                             _object_name = decode_verboten(_q.object_name, ARTN_DECODE_DICT)
-                            _text = f'Object: {_object_name}\n' \
-                                f'Telescope: {_q.telescope}\n' \
-                                f'Instrument: {_q.instrument}\n' \
-                                f'RA: {_q.ra_hms}\n' \
-                                f'Dec: {_q.dec_dms}\n' \
-                                f'Filter: {_q.filter_name}\n' \
-                                f'ExposureTime: {_q.exp_time}\n' \
-                                f'NumberOfExposures: {_q.num_exp}\n' \
-                                f'Airmass: {_q.airmass}\n' \
-                                f'LunarPhase: {_q.lunarphase}\n' \
-                                f'DatabaseID: {_q.id}\n' \
-                                f'FITS Data Location:     ' \
-                                f'https://scopenet.as.arizona.edu/orp/files/{os.path.basename(_tgz)}\n' \
-                                f'FITS Darks Location:    ' \
-                                f'https://scopenet.as.arizona.edu/orp/files/{os.path.basename(_dgz)}\n' \
-                                f'FITS SkyFlats Location: ' \
-                                f'https://scopenet.as.arizona.edu/orp/files/{os.path.basename(_sfgz)}\n' \
-                                f'NB: Calibration data may not be available until 08:00 the following day'
+                            _txt = f'{_object_name} observed using the {_q.telescope} telescope with {_q.instrument}\n' \
+                                f'RA: {_q.ra_hms}]  Dec: {_q.dec_dms}  Epoch: J2000\n' \
+                                f'{_q.num_exp} x {_q.exp_time}s exposures, in the {_q.filter_name} filter, at airmass {_q.airmass}\n' \
+                                f'Data archive: https://scopenet.as.arizona.edu/orp/files/{os.path.basename(_tgz)}\n' \
+                                f'NB: Calibration data may not be available until 08:00 the following day (or at all!)\n'
+                            for _k, _v in _tgzs.items():
+                                if os.path.exists(f'{_v}'):
+                                    _txt += f'{_k[0].upper()}{_k[1:]} archive: https://scopenet.as.arizona.edu/orp/files/{os.path.basename(_v)}\n' 
+                            _txt = _txt[:-1]
 
-                            # noinspection PyBroadException
                             try:
-                                dna_log.info(f"sending gmail to {_u.email}, num_exp={_q.num_exp}, "
-                                             f"num_taken={len(_gid_dict[f'{_gid}'])}, _text=\n{_text}")
-                                dna_gmail_send(dna_gs, [f'{_u.email}', DNA_GMAIL_USER], DNA_GMAIL_USER,
-                                               f'ARTN ORP Completed {_object_name}', _text)
+                                # notify specific user of all objects observed
+                                if _dna_user != '' and _dna_object == '':
+                                    if _dna_user.lower() in _u.email.lower():
+                                        dna_log.info(f"Case 1: sending gmail to {_dna_user} ({_u.email}), _txt={_txt}")
+                                        # dna_gmail_send(dna_gs, [f'{_u.email}', DNA_GMAIL_USER], DNA_GMAIL_USER, f'ARTN ORP Completed {_object_name}', _txt)
+                                # notify all user(s) of specific objects observed
+                                elif _dna_user == '' and _dna_object != '':
+                                    if _dna_object.lower() in _object_name.lower():
+                                        dna_log.info(f"Case 2: sending gmail to {_u.email}, object={_dna_object}, _txt={_txt}")
+                                        # dna_gmail_send(dna_gs, [f'{_u.email}', DNA_GMAIL_USER], DNA_GMAIL_USER, f'ARTN ORP Completed {_object_name}', _txt)
+                                # notify specific user of specific objects observed
+                                elif _dna_user != '' and _dna_object != '':
+                                    if _dna_user.lower() in _u.email.lower() and _dna_object.lower() in _object_name.lower():
+                                        dna_log.info(f"Case 3: sending gmail to {_dna_user} ({_u.email}), object={_dna_object}, _txt={_txt}")
+                                        # dna_gmail_send(dna_gs, [f'{_u.email}', DNA_GMAIL_USER], DNA_GMAIL_USER, f'ARTN ORP Completed {_object_name}', _txt)
+                                # notify all user of all objects observed
+                                else:
+                                        dna_log.info(f"Case 4: sending gmail to {_u.email}, _txt={_txt}")
+                                        # dna_gmail_send(dna_gs, [f'{_u.email}', DNA_GMAIL_USER], DNA_GMAIL_USER, f'ARTN ORP Completed {_object_name}', _txt)
                             except Exception as e:
                                 dna_log.error(f'failed to send gmail, error={e}')
 
@@ -553,7 +601,7 @@ def dna(_dna_fits=def_dna_fits, _dna_json=def_dna_json, _dna_iso=def_dna_iso, _g
         dna_gmail_close(dna_gs)
 
     # exit message
-    dna_log.info(f'dna(fits={_dna_fits}, json={_dna_json}, iso={_dna_iso}, gmail={_gmail}) ... exit')
+    dna_log.info(f'dna(data={_dna_data}, json={_dna_json}, instrument={_dna_instrument}, iso={_dna_iso}, object={_dna_object}, telescope={_dna_telescope}, user={_dna_user}, gmail={_gmail}) ... exit')
 
 
 # +
@@ -564,14 +612,22 @@ if __name__ == '__main__':
     # get command line argument(s)
     _p = argparse.ArgumentParser(description=f'ARTN Data Notification Agent',
                                  formatter_class=argparse.RawTextHelpFormatter)
-    _p.add_argument(f'--fits', default=f'{def_dna_fits}',
+    _p.add_argument(f'--data', default=f'{def_dna_data}',
                     help=f"""Data directory <str>, defaults to %(default)s""")
-    _p.add_argument(f'--gmail', default=False, action='store_true', help=f'if present, gmail owner')
+    _p.add_argument(f'--instrument', default=f'{def_dna_instrument}',
+                    help=f"""Instrument <str>, defaults to '%(default)s', choices: {INSTRUMENTS}""")
     _p.add_argument(f'--iso', default=f'{def_dna_iso}',
                     help=f"""ISO date <yyyymmdd>, defaults to %(default)s""")
     _p.add_argument(f'--json', default=f'{def_dna_json}',
                     help=f"""DNA json file <str>, defaults to %(default)s""")
+    _p.add_argument(f'--object', default=f'{def_dna_object}',
+                    help=f"""Object name <str>, defaults to '%(default)s'""")
+    _p.add_argument(f'--telescope', default=f'{def_dna_telescope}',
+                    help=f"""Telescope <str>, defaults to '%(default)s', choices: {TELESCOPES}""")
+    _p.add_argument(f'--user', default=f'{def_dna_user}',
+                    help=f"""User <str>, defaults to '%(default)s'""")
+    _p.add_argument(f'--gmail', default=False, action='store_true', help=f'if present, gmail owner')
     args = _p.parse_args()
 
     # execute
-    dna(args.fits, args.json, args.iso, bool(args.gmail))
+    dna(args.data, args.instrument, args.iso, args.json, args.object, args.telescope, args.user, bool(args.gmail))

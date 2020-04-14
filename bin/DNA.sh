@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 
 # +
@@ -16,11 +16,14 @@
 # default(s)
 # -
 today=$(date "+%Y%m%d")
-def_dna_code="/var/www/ARTN-DNA"
-def_dna_iso=$(date +%Y%m%d)
+
+def_dna_ins="Mont4k"
+def_dna_iso=${today}
 def_dna_json=".dna.json"
-def_fits_root="/data1/artn/rts2images/queue"
-def_orp_code="/var/www/ARTN-ORP"
+def_dna_tel="Kuiper"
+
+def_dna_home="/var/www/ARTN-DNA"
+def_orp_home="/var/www/ARTN-ORP"
 
 dry_run=0
 over_ride=0
@@ -28,95 +31,111 @@ send_gmail=0
 
 
 # +
-# variable(s)
+# supported telescope(s) and instrument(s)
 # -
-dna_code="${def_dna_code}"
-dna_iso="${def_dna_iso}"
-dna_json="${def_dna_json}"
-fits_root="${def_fits_root}"
-orp_code="${def_orp_code}"
+declare -A telescopes
+telescopes[Bok]="90Prime BCSpec"
+telescopes[Kuiper]="Mont4k"
+telescopes[MMT]=BinoSpec
+telescopes[Vatt]=Vatt4k
+
+_all_tel=${!telescopes[@]}
+_all_ins=${telescopes[@]}
 
 
 # +
 # utility functions
 # -
 write_blue () {
-  BLUE='\033[0;34m'
-  NCOL='\033[0m'
-  printf "${BLUE}${1}${NCOL}\n"
+  printf "\033[0;34m${1}\033[0m\n"
 }
+
 write_red () {
-  RED='\033[0;31m'
-  NCOL='\033[0m'
-  printf "${RED}${1}${NCOL}\n"
+  printf "\033[0;31m${1}\033[0m\n"
 }
+
 write_yellow () {
-  YELLOW='\033[0;33m'
-  NCOL='\033[0m'
-  printf "${YELLOW}${1}${NCOL}\n"
+  printf "\033[0;33m${1}\033[0m\n"
 }
+
 write_green () {
-  GREEN='\033[0;32m'
-  NCOL='\033[0m'
-  printf "${GREEN}${1}${NCOL}\n"
+  printf "\033[0;32m${1}\033[0m\n"
 }
+
 write_cyan () {
-  CYAN='\033[0;36m'
-  NCOL='\033[0m'
-  printf "${CYAN}${1}${NCOL}\n"
+  printf "\033[0;36m${1}\033[0m\n"
+}
+
+write_magenta () {
+  printf "\033[0;35m${1}\033[0m\n"
+}
+
+usage () {
+  write_blue   ""                                                                                                   2>&1
+  write_blue   "DNA Control"                                                                                        2>&1
+  write_blue   ""                                                                                                   2>&1
+  write_green  "Use:"                                                                                               2>&1
+  write_green  "  %% bash $0 --ins=<str> --iso=<int> --json=<str> --tel=<str> --dna=<str> --orp=<str> [--dry-run] [--over-ride] [--send-gmail]" 2>&1
+  write_green  ""                                                                                                   2>&1
+  write_yellow "Input(s):"                                                                                          2>&1
+  write_yellow "  --ins=<str>,  where <str> is the instrument name,  default=${def_dna_ins}, (choices:${_all_ins})" 2>&1
+  write_yellow "  --iso=<int>,  where <int> is the date in YYYYMMDD, default=${def_dna_iso}"                        2>&1
+  write_yellow "  --json=<str>, where <str> is the JSON log file,    default=${def_dna_json}"                       2>&1
+  write_yellow "  --tel=<str>,  where <str> is the telescope name,   default=${def_dna_tel}, (choices:${_all_tel})" 2>&1
+  write_yellow "  --dna=<str>,  where <str> is DNA code directory,   default=${def_dna_home}"                       2>&1
+  write_yellow "  --orp=<str>,  where <str> is ORP code directory,   default=${def_orp_home}"                       2>&1
+  write_yellow ""                                                                                                   2>&1
+  write_cyan   "Flag(s):"                                                                                           2>&1
+  write_cyan   "  --dry-run,    show (but do not execute) commands,  default=false"                                 2>&1
+  write_cyan   "  --over-ride,  replace existing json log file,      default=false"                                 2>&1
+  write_cyan   "  --send-gmail, send gmail to data owners,           default=false"                                 2>&1
+  write_cyan   ""                                                                                                   2>&1
 }
 
 
 # +
-# check command line argument(s) 
+# get command line argument(s) 
 # -
 while test $# -gt 0; do
   case "${1}" in
-    -d*|-D*|--dna*|--DNA*)
-      dna_code=$(echo $1 | cut -d'=' -f2)
+    --ins*)
+      dna_ins=$(echo $1 | cut -d'=' -f2)
       shift
       ;;
-    -f*|-F*|--fits*|--FITS*)
-      fits_root=$(echo $1 | cut -d'=' -f2)
-      shift
-      ;;
-    -g|-G|--gmail|--GMAIL|--send-gmail|--SEND-GMAIL)
-      send_gmail=1
-      shift
-      ;;
-    -i*|-I*|--iso*|--ISO*)
+    --iso*)
       dna_iso=$(echo $1 | cut -d'=' -f2)
       shift
       ;;
-    -j*|-J*|--json*|--JSON*)
+    --json*)
       dna_json=$(echo $1 | cut -d'=' -f2)
       shift
       ;;
-    -n|-N|--dry-run|--DRY-RUN)
+    --tel*)
+      dna_tel=$(echo $1 | cut -d'=' -f2)
+      shift
+      ;;
+    --dna*)
+      dna_home=$(echo $1 | cut -d'=' -f2)
+      shift
+      ;;
+    --orp*)
+      orp_home=$(echo $1 | cut -d'=' -f2)
+      shift
+      ;;
+    --dry-run)
       dry_run=1
       shift
       ;;
-    -o*|-O*|--orp*|--ORP*)
-      orp_code=$(echo $1 | cut -d'=' -f2)
+    --gmail|--send-gmail)
+      send_gmail=1
       shift
       ;;
-    -x|-X|--over-ride|--OVER-RIDE)
+    --over-ride)
       over_ride=1
       shift
       ;;
-    -h*|-H*|--help*|--HELP*|*)
-      write_blue "\nDNA Control\n" 2>&1
-      write_green "Use:\n %% bash $0 --dna=<str> --fits=<str> --iso=<int> --json=<str> --orp=<str> [--dry-run] [--over-ride] [--send-gmail]\n" 2>&1
-      write_yellow "Input(s):" 2>&1
-      write_yellow "  --dna=<str>,       -d=<str>  where <str> is DNA code directory,       default=${def_dna_code}" 2>&1
-      write_yellow "  --fits=<str>,      -f=<str>  where <str> is data root directory,      default=${def_fits_root}" 2>&1
-      write_yellow "  --iso=<int>,       -i=<int>  where <int> is the date in YYYYMMDD,     default=${def_dna_iso}" 2>&1
-      write_yellow "  --json=<str>,      -j=<str>  where <str> is the JSON log file,        default=${def_dna_json}" 2>&1
-      write_yellow "  --orp=<str>,       -o=<str>  where <str> is ORP code directory,       default=${def_orp_code}" 2>&1
-      write_cyan "Flag(s):" 2>&1
-      write_cyan "    --dry-run,         -n        show (but do not execute) commands,      default=false" 2>&1
-      write_cyan "    --over-ride,       -x        replace existing json log file,          default=false" 2>&1
-      write_cyan "    --send-gmail,      -g        send gmail to data owners,               default=false" 2>&1
+    --help*|*)
+      usage
       exit 0
       ;;
   esac
@@ -126,75 +145,76 @@ done
 # +
 # check and (re)set variable(s)
 # -
-if [[ ! -d ${dna_code} ]]; then
-  write_red "<ERROR> code directory (${dna_code}) is unknown ... exiting"
-  exit 0 
-fi
+[[ -z ${dna_ins} ]]  && dna_ins=${def_dna_ins}
+[[ -z ${dna_iso} ]]  && dna_iso=${def_dna_iso}
+[[ -z ${dna_json} ]] && dna_json=${def_dna_json}
+[[ -z ${dna_tel} ]]  && dna_tel=${def_dna_tel}
+[[ -z ${dna_home} ]] && dna_home=${def_dna_home}
+[[ -z ${orp_home} ]] && orp_home=${def_orp_home}
+[[ ! ${telescopes[${dna_tel}]} == *${dna_ins}* ]] && write_red "<ERROR> ${dna_ins} not supported!" && exit 0
+[[ ! ${dna_iso} =~ ^[12][09][0-9]{6}$ ]] && write_red "<ERROR> ${dna_iso} is invalid!" && exit 0
+[[ -z ${telescopes[${dna_tel}]} ]] && write_red "<ERROR> ${dna_tel} not supported!" && exit 0
+[[ ! -d ${dna_home} ]] && write_red "<ERROR> directory (${dna_home}) is invalid!" && exit 0
+[[ ! -d ${orp_home} ]] && write_red "<ERROR> directory (${orp_home}) is invalid!" && exit 0
 
-case ${dna_iso} in
-  [0-9]*)
-    ;;
-  *)
-    dna_iso=${def_dna_iso}
-    ;;
-esac
+data_dir=$(echo "/rts2data/${dna_tel}/${dna_ins}/${dna_iso}")
+[[ ! -d ${data_dir} ]] && write_red "<ERROR> directory (${data_dir}) is invalid!" && exit 0
 
-if [[ ! -d ${fits_root} ]]; then
-  write_red "<ERROR> data directory (${fits_root}) is unknown ... exiting"
-  exit 0 
-fi
-
-_json_dir=`dirname ${fits_root}/${dna_iso}/C0/${dna_json}`
-if [[ ! -e ${_json_dir} ]]; then
-  write_red "<ERROR> json directory (${_json_dir}) is unknown ... exiting"
-  exit 0 
-else
-  touch ${_json_dir}/${dna_json}
-  chown artn-eng:artn-eng ${_json_dir}/${dna_json}
-fi
-
-if [[ ! -d ${orp_code} ]]; then
-  write_red "<ERROR> code directory (${orp_code}) is unknown ... exiting"
-  exit 0 
-fi
 
 # set up
 export PYTHONPATH=`pwd`
-source ${orp_code}/etc/ARTN.sh ${orp_code}
-source ${orp_code}/etc/ORP.sh  ${orp_code}
-source ${dna_code}/etc/DNA.sh  ${dna_code}
-export PYTHONPATH=${dna_code}/src:${dna_code}:${PYTHONPATH}
+source ${orp_home}/etc/ARTN.sh ${orp_home}
+source ${orp_home}/etc/ORP.sh  ${orp_home}
+source ${dna_home}/etc/DNA.sh  ${dna_home}
+export PYTHONPATH=${dna_home}/src:${dna_home}:${PYTHONPATH}
 
 
 # +
 # execute
 # -
-write_blue "%% bash $0 --dna=${dna_code} --fits=${fits_root} --iso=${dna_iso} --json=${dna_json} --orp=${orp_code} --dry-run=${dry_run} --over-ride=${over_ride} --send-gmail=${send_gmail}"
+write_blue "%% bash $0 --ins=${dna_ins} --iso=${dna_iso} --json=${dna_json} --tel=${dna_tel} --dna=${dna_home} --orp=${orp_home} --dry-run=${dry_run} --over-ride=${over_ride} --send-gmail=${send_gmail}"
 
-cli_args="--fits=${fits_root}/${dna_iso}/C0 --json=${_json_dir}/${dna_json} --iso=${dna_iso}"
+cli_args="--data=${data_dir} --json=${data_dir}/${dna_json} --iso=${dna_iso} --telescope=${dna_tel} --instrument=${dna_ins}"
 if [[ ${send_gmail} -eq 1 ]]; then
   cli_args="${cli_args} --gmail"
 fi
 
 if [[ ${dry_run} -eq 1 ]]; then
-  if [[ ${over_ride} -eq 1 ]]; then
-    write_yellow "Dry-Run> mv ${_json_dir}/${dna_json} ${_json_dir}/${dna_json}.${today}"
-  fi
-  write_yellow "Dry-Run> nohup python3.7 ${dna_code}/src/dna.py ${cli_args} >> ${dna_code}/logs/dna.${dna_iso}.log 2>&1 &"
-  write_yellow "Dry-Run> touch -t ${dna_iso}0000 ${_json_dir}/${dna_json}"
-  write_yellow "Dry-Run> chown -R www-data:www-data ${dna_code}"
+  write_yellow "Dry-Run> touch ${data_dir}/${dna_json}"
+  write_yellow "Dry-Run> chown artn-eng:artn-eng ${data_dir}/${dna_json}"
+else
+  write_green "`date`> touch ${data_dir}/${dna_json}"
+  touch ${data_dir}/${dna_json}
+  write_green "`date`> chown artn-eng:artn-eng ${data_dir}/${dna_json}"
+  chown artn-eng:artn-eng ${data_dir}/${dna_json}
+fi
 
+if [[ ${dry_run} -eq 1 ]]; then
+  if [[ ${over_ride} -eq 1 ]]; then
+    write_yellow "Dry-Run> mv ${data_dir}/${dna_json} ${data_dir}/${dna_json}.${today}"
+  fi
 else
   if [[ ${over_ride} -eq 1 ]]; then
-    write_green "`date`> mv ${_json_dir}/${dna_json} ${_json_dir}/${dna_json}.${today}"
-    mv ${_json_dir}/${dna_json} ${_json_dir}/${dna_json}.${today}
+    write_green "`date`> mv ${data_dir}/${dna_json} ${data_dir}/${dna_json}.${today}"
+    mv ${data_dir}/${dna_json} ${data_dir}/${dna_json}.${today}
   fi
-  write_green "`date`> nohup python3.7 ${dna_code}/src/dna.py ${cli_args} >> ${dna_code}/logs/dna.${dna_iso}.log 2>&1 &"
-  nohup python3.7 ${dna_code}/src/dna.py ${cli_args} >> ${dna_code}/logs/dna.${dna_iso}.log 2>&1 &
-  write_green "`date`> touch -t ${dna_iso}0000 ${_json_dir}/${dna_json}"
-  touch -t ${dna_iso}0000 ${_json_dir}/${dna_json}
-  write_green "`date`> chown -R www-data:www-data ${dna_code}"
-  chown -R www-data:www-data ${dna_code}
+fi
+
+if [[ ${dry_run} -eq 1 ]]; then
+  write_yellow "Dry-Run> nohup python3.7 ${dna_home}/src/dna.py ${cli_args} >> ${dna_home}/logs/dna.${dna_iso}.log 2>&1 &"
+else
+  write_green "`date`> nohup python3.7 ${dna_home}/src/dna.py ${cli_args} >> ${dna_home}/logs/dna.${dna_iso}.log 2>&1 &"
+  nohup python3.7 ${dna_home}/src/dna.py ${cli_args} >> ${dna_home}/logs/dna.${dna_iso}.log 2>&1 &
+fi
+
+if [[ ${dry_run} -eq 1 ]]; then
+  write_yellow "Dry-Run> touch -t ${dna_iso}0000 ${data_dir}/${dna_json}"
+  write_yellow "Dry-Run> chown -R www-data:www-data ${dna_home}"
+else
+  write_green "`date`> touch -t ${dna_iso}0000 ${data_dir}/${dna_json}"
+  touch -t ${dna_iso}0000 ${data_dir}/${dna_json}
+  write_green "`date`> chown -R www-data:www-data ${dna_home}"
+  chown -R www-data:www-data ${dna_home}
 fi
 
 # +
