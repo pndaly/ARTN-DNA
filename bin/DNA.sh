@@ -71,25 +71,25 @@ write_magenta () {
 }
 
 usage () {
-  write_blue   ""                                                                                                   2>&1
-  write_blue   "DNA Control"                                                                                        2>&1
-  write_blue   ""                                                                                                   2>&1
-  write_green  "Use:"                                                                                               2>&1
+  write_blue   ""                                                                                                                               2>&1
+  write_blue   "DNA Control"                                                                                                                    2>&1
+  write_blue   ""                                                                                                                               2>&1
+  write_green  "Use:"                                                                                                                           2>&1
   write_green  "  %% bash $0 --ins=<str> --iso=<int> --json=<str> --tel=<str> --dna=<str> --orp=<str> [--dry-run] [--over-ride] [--send-gmail]" 2>&1
-  write_green  ""                                                                                                   2>&1
-  write_yellow "Input(s):"                                                                                          2>&1
-  write_yellow "  --ins=<str>,  where <str> is the instrument name,  default=${def_dna_ins}, (choices:${_all_ins})" 2>&1
-  write_yellow "  --iso=<int>,  where <int> is the date in YYYYMMDD, default=${def_dna_iso}"                        2>&1
-  write_yellow "  --json=<str>, where <str> is the JSON log file,    default=${def_dna_json}"                       2>&1
-  write_yellow "  --tel=<str>,  where <str> is the telescope name,   default=${def_dna_tel}, (choices:${_all_tel})" 2>&1
-  write_yellow "  --dna=<str>,  where <str> is DNA code directory,   default=${def_dna_home}"                       2>&1
-  write_yellow "  --orp=<str>,  where <str> is ORP code directory,   default=${def_orp_home}"                       2>&1
-  write_yellow ""                                                                                                   2>&1
-  write_cyan   "Flag(s):"                                                                                           2>&1
-  write_cyan   "  --dry-run,    show (but do not execute) commands,  default=false"                                 2>&1
-  write_cyan   "  --over-ride,  replace existing json log file,      default=false"                                 2>&1
-  write_cyan   "  --send-gmail, send gmail to data owners,           default=false"                                 2>&1
-  write_cyan   ""                                                                                                   2>&1
+  write_green  ""                                                                                                                               2>&1
+  write_yellow "Input(s):"                                                                                                                      2>&1
+  write_yellow "  --ins=<str>,  where <str> is the instrument name,  default=${def_dna_ins}, (choices:${_all_ins})"                             2>&1
+  write_yellow "  --iso=<int>,  where <int> is the date in YYYYMMDD, default=${def_dna_iso}"                                                    2>&1
+  write_yellow "  --json=<str>, where <str> is the JSON log file,    default=${def_dna_json}"                                                   2>&1
+  write_yellow "  --tel=<str>,  where <str> is the telescope name,   default=${def_dna_tel}, (choices:${_all_tel})"                             2>&1
+  write_yellow "  --dna=<str>,  where <str> is DNA code directory,   default=${def_dna_home}"                                                   2>&1
+  write_yellow "  --orp=<str>,  where <str> is ORP code directory,   default=${def_orp_home}"                                                   2>&1
+  write_yellow ""                                                                                                                               2>&1
+  write_cyan   "Flag(s):"                                                                                                                       2>&1
+  write_cyan   "  --dry-run,    show (but do not execute) commands,  default=false"                                                             2>&1
+  write_cyan   "  --over-ride,  replace existing json log file,      default=false"                                                             2>&1
+  write_cyan   "  --send-gmail, send gmail to data owners,           default=false"                                                             2>&1
+  write_cyan   ""                                                                                                                               2>&1
 }
 
 

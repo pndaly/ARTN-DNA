@@ -126,35 +126,37 @@ done
 # +
 # work function(s)
 # -
-_fix_ownership () {
-  # $1 = dry run, $2 = directory/file
-  if [[ -f ${2} ]]; then
-    if [[ ${1} -eq 1 ]]; then
-      write_yellow "Dry-Run> chown -R www-data:www-data ${2}"
-      write_yellow "Dry-Run> chmod -R 775 ${2}"
-    else
-      write_green "Executing> chown -R www-data:www-data ${2}"
-      chown -R www-data:www-data ${2}
-      write_green "Executing> chmod -R 775 ${2}"
-      chmod -R 775 ${2}
-    fi
-  fi
-}
-
 _tar_files () {
   # $1 = dry run, $2 = directory, $3 = type
-  _iso=$(basename $(dirname ${2}))
+  _tel=$(echo ${2} | cut -d'/' -f3)
+  _ins=$(echo ${2} | cut -d'/' -f4)
+  _iso=$(echo ${2} | cut -d'/' -f5)
+  _typ=$(echo ${2} | cut -d'/' -f6)
   if [[ ${1} -eq 1 ]]; then
     if [[ -d ${2} ]]; then
-      write_yellow "Dry-Run> tar -czpvf /var/www/ARTN-ORP/instance/files/${3}.${_iso}.tgz ${2}/*.fits >> /dev/null 2>&1"
+      _f=$(find ${2} -name "*.fits" -print)
+      if [[ ! -z ${_f} ]]; then
+        write_yellow "Dry-Run> rm -f /var/www/ARTN-ORP/instance/files/${_tel}.${_ins}.${_iso}.${_typ}.tgz >> /dev/null 2>&1"
+        write_yellow "Dry-Run> tar -czpvf /var/www/ARTN-ORP/instance/files/${_tel}.${_ins}.${_iso}.${_typ}.tgz ${2}/*.fits >> /dev/null 2>&1"
+        write_yellow "Dry-Run> chown www-data:www-data /var/www/ARTN-ORP/instance/files/${_tel}.${_ins}.${_iso}.${_typ}.tgz"
+        write_yellow "Dry-Run> chmod 775 /var/www/ARTN-ORP/instance/files/${_tel}.${_ins}.${_iso}.${_typ}.tgz"
+      fi
     fi
   else
     if [[ -d ${2} ]]; then
-      write_green "Executing> tar -czpvf /var/www/ARTN-ORP/instance/files/${3}.${_iso}.tgz ${2}/*.fits >> /dev/null 2>&1"
-      tar -czpvf /var/www/ARTN-ORP/instance/files/${3}.${_iso}.tgz ${2}/*.fits >> /dev/null 2>&1
+      _f=$(find ${2} -name "*.fits" -print)
+      if [[ ! -z ${_f} ]]; then
+        write_green "`date`> rm -f /var/www/ARTN-ORP/instance/files/${_tel}.${_ins}.${_iso}.${_typ}.tgz >> /dev/null 2>&1"
+        rm -f /var/www/ARTN-ORP/instance/files/${_tel}.${_ins}.${_iso}.${_typ}.tgz >> /dev/null 2>&1
+        write_green "`date`> tar -czpvf /var/www/ARTN-ORP/instance/files/${_tel}.${_ins}.${_iso}.${_typ}.tgz ${2}/*.fits >> /dev/null 2>&1"
+        tar -czpvf /var/www/ARTN-ORP/instance/files/${_tel}.${_ins}.${_iso}.${_typ}.tgz ${2}/*.fits >> /dev/null 2>&1
+        write_green "`date`> chown www-data:www-data /var/www/ARTN-ORP/instance/files/${_tel}.${_ins}.${_iso}.${_typ}.tgz"
+        chown www-data:www-data /var/www/ARTN-ORP/instance/files/${_tel}.${_ins}.${_iso}.${_typ}.tgz
+        write_green "`date`> chmod 775 /var/www/ARTN-ORP/instance/files/${_tel}.${_ins}.${_iso}.${_typ}.tgz"
+        chmod 775 /var/www/ARTN-ORP/instance/files/${_tel}.${_ins}.${_iso}.${_typ}.tgz
+      fi
     fi
   fi
-  _fix_ownership ${1} /var/www/ARTN-ORP/instance/files/${3}.${_iso}.tgz
 }
 
 
@@ -164,13 +166,13 @@ _tar_files () {
 write_blue "%% bash $0 --ins=${tgz_ins} --iso=${tgz_iso} --tel=${tgz_tel} --dry-run=${dry_run}"
 
 # create data directory(s)
-_tar_files ${dry_run} /rts2data/${tgz_tel}/${tgz_ins}/${tgz_iso}/bias        bias
-_tar_files ${dry_run} /rts2data/${tgz_tel}/${tgz_ins}/${tgz_iso}/calibration calibration
-_tar_files ${dry_run} /rts2data/${tgz_tel}/${tgz_ins}/${tgz_iso}/dark        dark
-_tar_files ${dry_run} /rts2data/${tgz_tel}/${tgz_ins}/${tgz_iso}/flat        flat
-_tar_files ${dry_run} /rts2data/${tgz_tel}/${tgz_ins}/${tgz_iso}/focus       focus
-_tar_files ${dry_run} /rts2data/${tgz_tel}/${tgz_ins}/${tgz_iso}/skyflat     skyflat
-_tar_files ${dry_run} /rts2data/${tgz_tel}/${tgz_ins}/${tgz_iso}/standard    standard
+_tar_files ${dry_run} /rts2data/${tgz_tel}/${tgz_ins}/${tgz_iso}/bias
+_tar_files ${dry_run} /rts2data/${tgz_tel}/${tgz_ins}/${tgz_iso}/calibration
+_tar_files ${dry_run} /rts2data/${tgz_tel}/${tgz_ins}/${tgz_iso}/dark
+_tar_files ${dry_run} /rts2data/${tgz_tel}/${tgz_ins}/${tgz_iso}/flat
+_tar_files ${dry_run} /rts2data/${tgz_tel}/${tgz_ins}/${tgz_iso}/focus
+_tar_files ${dry_run} /rts2data/${tgz_tel}/${tgz_ins}/${tgz_iso}/skyflat
+_tar_files ${dry_run} /rts2data/${tgz_tel}/${tgz_ins}/${tgz_iso}/standard
 
 # fix code-base
 chown -R www-data:www-data /var/www/ARTN-DNA
