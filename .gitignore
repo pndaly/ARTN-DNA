@@ -24,6 +24,11 @@ __pycache__
 .idea
 
 # +
+# old stuff
+# -
+cron/DNA.old.sh
+
+# +
 # OS
 # -
 .DS_Store
