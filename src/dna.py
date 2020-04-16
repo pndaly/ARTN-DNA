@@ -38,7 +38,7 @@ __doc__ = """
 # +
 # constant(s)
 # -
-DNA_ARTN_TGZ_FILES = '/var/www/ARTN-ORP/instance/files'
+DNA_TGZ_DIR = '/var/www/ARTN-ORP/instance/files'
 DNA_COLOR_FORMAT = '%(log_color)s%(asctime)-20s %(levelname)-7s %(filename)-5s line:%(lineno)-5d Message: %(message)s'
 DNA_CONSOLE_FORMAT = '%(asctime)-20s %(levelname)-5s %(filename)-7s line:%(lineno)-5d Message: %(message)s'
 DNA_ISO_MATCH = re.compile(r'\d{8}')
@@ -188,11 +188,11 @@ dna_log = DnaLogger('ARTN-DNA').logger
 # default(s)
 # -
 def_dna_iso = datetime.now(tz=DNA_TIMEZONE).isoformat().split('T')[0].replace('-', '')
-def_dna_instrument = f'Mont4k'
-def_dna_data = f'/rts2data/Kuiper/Mont4k/{def_dna_iso}/object'
+def_dna_ins = f'Mont4k'
+def_dna_dir = f'/rts2data/Kuiper/Mont4k/{def_dna_iso}/object'
 def_dna_json = f'/rts2data/Kuiper/Mont4k/{def_dna_iso}/.dna.json'
-def_dna_object = f''
-def_dna_telescope = f'Kuiper'
+def_dna_obj = f''
+def_dna_tel = f'Kuiper'
 def_dna_user = f''
 
 
@@ -342,26 +342,26 @@ def dna_seek(_path='', _type=''):
 # function: dna()
 # -
 # noinspection PyBroadException
-def dna(_dna_data=def_dna_data, _dna_instrument=def_dna_instrument, _dna_iso=def_dna_iso, _dna_json=def_dna_json, 
-        _dna_object=def_dna_object, _dna_telescope=def_dna_telescope, _dna_user=def_dna_user, _gmail=False):
+def dna(_dna_dir=def_dna_dir, _dna_ins=def_dna_ins, _dna_iso=def_dna_iso, _dna_json=def_dna_json, 
+        _dna_obj=def_dna_obj, _dna_tel=def_dna_tel, _dna_user=def_dna_user, _gmail=False):
     """ finds data, tarballs it up and send the user a notification on location """
 
     # entry message
-    dna_log.info(f'dna(data={_dna_data}, json={_dna_json}, instrument={_dna_instrument}, iso={_dna_iso}, object={_dna_object}, telescope={_dna_telescope}, user={_dna_user}, gmail={_gmail}) ... entry')
+    dna_log.info(f'dna(data={_dna_dir}, json={_dna_json}, instrument={_dna_ins}, iso={_dna_iso}, object={_dna_obj}, telescope={_dna_tel}, user={_dna_user}, gmail={_gmail}) ... entry')
 
     # check input(s)
-    _dna_data = os.path.abspath(os.path.expanduser(f'{_dna_data}'))
-    if not isinstance(_dna_data, str) or _dna_data.strip() == '' or not os.path.isdir(f'{_dna_data}'):
-        dna_log.error(f'invalid input, _dna_data={_dna_data}')
+    _dna_dir = os.path.abspath(os.path.expanduser(f'{_dna_dir}'))
+    if not isinstance(_dna_dir, str) or _dna_dir.strip() == '' or not os.path.isdir(f'{_dna_dir}'):
+        dna_log.error(f'invalid input, _dna_dir={_dna_dir}')
         return
     else:
-        dna_log.info(f'valid input, _dna_data={_dna_data}')
+        dna_log.info(f'valid input, _dna_dir={_dna_dir}')
 
-    if not isinstance(_dna_instrument, str) or _dna_instrument.strip() == '' or _dna_instrument not in INSTRUMENTS:
-        dna_log.error(f'invalid input, _dna_instrument={_dna_instrument}')
+    if not isinstance(_dna_ins, str) or _dna_ins.strip() == '' or _dna_ins not in INSTRUMENTS:
+        dna_log.error(f'invalid input, _dna_ins={_dna_ins}')
         return
     else:
-        dna_log.info(f'valid input, _dna_instrument={_dna_instrument}')
+        dna_log.info(f'valid input, _dna_ins={_dna_ins}')
 
     if not isinstance(_dna_iso, str) or len(_dna_iso) != 8 or re.match(DNA_ISO_MATCH, _dna_iso) is None:
         dna_log.error(f'invalid input, _dna_iso={_dna_iso}')
@@ -376,17 +376,17 @@ def dna(_dna_data=def_dna_data, _dna_instrument=def_dna_instrument, _dna_iso=def
     else:
         dna_log.info(f'valid input, _dna_json={_dna_json}')
 
-    if not isinstance(_dna_object, str):
-        dna_log.error(f'invalid input, _dna_object={_dna_object}')
+    if not isinstance(_dna_obj, str):
+        dna_log.error(f'invalid input, _dna_obj={_dna_obj}')
         return
     else:
-        dna_log.info(f'valid input, _dna_object={_dna_object}')
+        dna_log.info(f'valid input, _dna_obj={_dna_obj}')
 
-    if not isinstance(_dna_telescope, str) or _dna_telescope.strip() == '' or _dna_telescope not in TELESCOPES:
-        dna_log.error(f'invalid input, _dna_telescope={_dna_telescope}')
+    if not isinstance(_dna_tel, str) or _dna_tel.strip() == '' or _dna_tel not in TELESCOPES:
+        dna_log.error(f'invalid input, _dna_tel={_dna_tel}')
         return
     else:
-        dna_log.info(f'valid input, _dna_telescope={_dna_telescope}')
+        dna_log.info(f'valid input, _dna_tel={_dna_tel}')
 
     if not isinstance(_dna_user, str):
         dna_log.error(f'invalid input, _dna_user={_dna_user}')
@@ -394,11 +394,11 @@ def dna(_dna_data=def_dna_data, _dna_instrument=def_dna_instrument, _dna_iso=def
     else:
         dna_log.info(f'valid input, _dna_user={_dna_user}')
 
-    if f'{_dna_instrument}' not in SUPPORTED[f'{_dna_telescope}']:
-        dna_log.error(f'invalid combination, _dna_instrument={_dna_instrument}, _dna_telescope={_dna_telescope}')
+    if f'{_dna_ins}' not in SUPPORTED[f'{_dna_tel}']:
+        dna_log.error(f'invalid combination, _dna_ins={_dna_ins}, _dna_tel={_dna_tel}')
         return
     else:
-        dna_log.info(f'valid combination, _dna_instrument={_dna_instrument}, _dna_telescope={_dna_telescope}')
+        dna_log.info(f'valid combination, _dna_ins={_dna_ins}, _dna_tel={_dna_tel}')
 
     if not isinstance(_gmail, bool):
         _gmail = False
@@ -408,15 +408,17 @@ def dna(_dna_data=def_dna_data, _dna_instrument=def_dna_instrument, _dna_iso=def
     # set up
     # -
     _tgzs = {
-        'bias': os.path.abspath(os.path.expanduser(os.path.join(DNA_ARTN_TGZ_FILES, f'bias.{_dna_iso}.tgz'))),
-        'calibration': os.path.abspath(os.path.expanduser(os.path.join(DNA_ARTN_TGZ_FILES, f'calibration.{_dna_iso}.tgz'))),
-        'dark': os.path.abspath(os.path.expanduser(os.path.join(DNA_ARTN_TGZ_FILES, f'dark.{_dna_iso}.tgz'))),
-        'darks': os.path.abspath(os.path.expanduser(os.path.join(DNA_ARTN_TGZ_FILES, f'darks.{_dna_iso}.tgz'))),
-        'flat': os.path.abspath(os.path.expanduser(os.path.join(DNA_ARTN_TGZ_FILES, f'flat.{_dna_iso}.tgz'))),
-        'focus': os.path.abspath(os.path.expanduser(os.path.join(DNA_ARTN_TGZ_FILES, f'focus.{_dna_iso}.tgz'))),
-        'skyflat': os.path.abspath(os.path.expanduser(os.path.join(DNA_ARTN_TGZ_FILES, f'skyflat.{_dna_iso}.tgz'))),
-        'skyflats': os.path.abspath(os.path.expanduser(os.path.join(DNA_ARTN_TGZ_FILES, f'skyflats.{_dna_iso}.tgz'))),
-        'standard': os.path.abspath(os.path.expanduser(os.path.join(DNA_ARTN_TGZ_FILES, f'standard.{_dna_iso}.tgz')))
+        # new
+        'bias': os.path.abspath(os.path.expanduser(os.path.join(DNA_TGZ_DIR, f'{_dna_tel}.{_dna_ins}.{_dna_iso}.bias.tgz'))),
+        'calibration': os.path.abspath(os.path.expanduser(os.path.join(DNA_TGZ_DIR, f'{_dna_tel}.{_dna_ins}.{_dna_iso}.calibration.tgz'))),
+        'dark': os.path.abspath(os.path.expanduser(os.path.join(DNA_TGZ_DIR, f'{_dna_tel}.{_dna_ins}.{_dna_iso}.dark.tgz'))),
+        'flat': os.path.abspath(os.path.expanduser(os.path.join(DNA_TGZ_DIR, f'{_dna_tel}.{_dna_ins}.{_dna_iso}.flat.tgz'))),
+        'focus': os.path.abspath(os.path.expanduser(os.path.join(DNA_TGZ_DIR, f'{_dna_tel}.{_dna_ins}.{_dna_iso}.focus.tgz'))),
+        'skyflat': os.path.abspath(os.path.expanduser(os.path.join(DNA_TGZ_DIR, f'{_dna_tel}.{_dna_ins}.{_dna_iso}.skyflat.tgz'))),
+        'standard': os.path.abspath(os.path.expanduser(os.path.join(DNA_TGZ_DIR, f'{_dna_tel}.{_dna_ins}.{_dna_iso}.standard.tgz'))),
+        # legacy
+        'darks': os.path.abspath(os.path.expanduser(os.path.join(DNA_TGZ_DIR, f'darks.{_dna_iso}.tgz'))),
+        'skyflats': os.path.abspath(os.path.expanduser(os.path.join(DNA_TGZ_DIR, f'skyflats.{_dna_iso}.tgz')))
     }
     dna_log.info(f'_tgzs={_tgzs}')
     
@@ -445,7 +447,7 @@ def dna(_dna_data=def_dna_data, _dna_instrument=def_dna_instrument, _dna_iso=def
     # +
     # process
     # -
-    _fits_dictionary = dna_seek(_dna_data, 'fits')
+    _fits_dictionary = dna_seek(_dna_dir, 'fits')
     if _fits_dictionary is None or _fits_dictionary is {}:
         dna_log.info(f'no files found for processing')
 
@@ -535,7 +537,9 @@ def dna(_dna_data=def_dna_data, _dna_instrument=def_dna_instrument, _dna_iso=def
                         _element['email'] = _u.email
 
                         # zip all files in this dataset
-                        _tgz = os.path.join(f'{DNA_ARTN_TGZ_FILES}', f'{_u.username}.{_dna_iso}.{_q.rts2_id}.tgz')
+                        _tgz = os.path.abspath(os.path.expanduser(
+                                               os.path.join(DNA_TGZ_DIR, 
+                                                            f'{_dna_tel}.{_dna_ins}.{_dna_iso}.{_u.username}.{_q.rts2_id}.tgz')))
                         if _gid_dict[f'{_gid}'] is not []:
                             dna_log.info(f'creating archive {_tgz}')
                             with tarfile.open(f'{_tgz}', mode='w:gz') as _wf:
@@ -557,19 +561,19 @@ def dna(_dna_data=def_dna_data, _dna_instrument=def_dna_instrument, _dna_iso=def
 
                             try:
                                 # notify specific user of all objects observed
-                                if _dna_user != '' and _dna_object == '':
+                                if _dna_user != '' and _dna_obj == '':
                                     if _dna_user.lower() in _u.email.lower():
                                         dna_log.info(f"Case 1: sending gmail to {_dna_user} ({_u.email}), _txt={_txt}")
                                         # dna_gmail_send(dna_gs, [f'{_u.email}', DNA_GMAIL_USER], DNA_GMAIL_USER, f'ARTN ORP Completed {_object_name}', _txt)
                                 # notify all user(s) of specific objects observed
-                                elif _dna_user == '' and _dna_object != '':
-                                    if _dna_object.lower() in _object_name.lower():
-                                        dna_log.info(f"Case 2: sending gmail to {_u.email}, object={_dna_object}, _txt={_txt}")
+                                elif _dna_user == '' and _dna_obj != '':
+                                    if _dna_obj.lower() in _object_name.lower():
+                                        dna_log.info(f"Case 2: sending gmail to {_u.email}, object={_dna_obj}, _txt={_txt}")
                                         # dna_gmail_send(dna_gs, [f'{_u.email}', DNA_GMAIL_USER], DNA_GMAIL_USER, f'ARTN ORP Completed {_object_name}', _txt)
                                 # notify specific user of specific objects observed
-                                elif _dna_user != '' and _dna_object != '':
-                                    if _dna_user.lower() in _u.email.lower() and _dna_object.lower() in _object_name.lower():
-                                        dna_log.info(f"Case 3: sending gmail to {_dna_user} ({_u.email}), object={_dna_object}, _txt={_txt}")
+                                elif _dna_user != '' and _dna_obj != '':
+                                    if _dna_user.lower() in _u.email.lower() and _dna_obj.lower() in _object_name.lower():
+                                        dna_log.info(f"Case 3: sending gmail to {_dna_user} ({_u.email}), object={_dna_obj}, _txt={_txt}")
                                         # dna_gmail_send(dna_gs, [f'{_u.email}', DNA_GMAIL_USER], DNA_GMAIL_USER, f'ARTN ORP Completed {_object_name}', _txt)
                                 # notify all user of all objects observed
                                 else:
@@ -601,7 +605,7 @@ def dna(_dna_data=def_dna_data, _dna_instrument=def_dna_instrument, _dna_iso=def
         dna_gmail_close(dna_gs)
 
     # exit message
-    dna_log.info(f'dna(data={_dna_data}, json={_dna_json}, instrument={_dna_instrument}, iso={_dna_iso}, object={_dna_object}, telescope={_dna_telescope}, user={_dna_user}, gmail={_gmail}) ... exit')
+    dna_log.info(f'dna(data={_dna_dir}, json={_dna_json}, instrument={_dna_ins}, iso={_dna_iso}, object={_dna_obj}, telescope={_dna_tel}, user={_dna_user}, gmail={_gmail}) ... exit')
 
 
 # +
@@ -612,17 +616,17 @@ if __name__ == '__main__':
     # get command line argument(s)
     _p = argparse.ArgumentParser(description=f'ARTN Data Notification Agent',
                                  formatter_class=argparse.RawTextHelpFormatter)
-    _p.add_argument(f'--data', default=f'{def_dna_data}',
+    _p.add_argument(f'--data', default=f'{def_dna_dir}',
                     help=f"""Data directory <str>, defaults to %(default)s""")
-    _p.add_argument(f'--instrument', default=f'{def_dna_instrument}',
+    _p.add_argument(f'--instrument', default=f'{def_dna_ins}',
                     help=f"""Instrument <str>, defaults to '%(default)s', choices: {INSTRUMENTS}""")
     _p.add_argument(f'--iso', default=f'{def_dna_iso}',
                     help=f"""ISO date <yyyymmdd>, defaults to %(default)s""")
     _p.add_argument(f'--json', default=f'{def_dna_json}',
                     help=f"""DNA json file <str>, defaults to %(default)s""")
-    _p.add_argument(f'--object', default=f'{def_dna_object}',
+    _p.add_argument(f'--object', default=f'{def_dna_obj}',
                     help=f"""Object name <str>, defaults to '%(default)s'""")
-    _p.add_argument(f'--telescope', default=f'{def_dna_telescope}',
+    _p.add_argument(f'--telescope', default=f'{def_dna_tel}',
                     help=f"""Telescope <str>, defaults to '%(default)s', choices: {TELESCOPES}""")
     _p.add_argument(f'--user', default=f'{def_dna_user}',
                     help=f"""User <str>, defaults to '%(default)s'""")
