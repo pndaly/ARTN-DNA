@@ -181,12 +181,12 @@ fi
 
 if [[ ${dry_run} -eq 1 ]]; then
   write_yellow "Dry-Run> touch ${data_dir}/${dna_json}"
-  write_yellow "Dry-Run> chown artn-eng:artn-eng ${data_dir}/${dna_json}"
+  write_yellow "Dry-Run> chown artn-eng:users ${data_dir}/${dna_json}"
 else
   write_green "`date`> touch ${data_dir}/${dna_json}"
   touch ${data_dir}/${dna_json}
-  write_green "`date`> chown artn-eng:artn-eng ${data_dir}/${dna_json}"
-  chown artn-eng:artn-eng ${data_dir}/${dna_json}
+  write_green "`date`> chown artn-eng:users ${data_dir}/${dna_json}"
+  chown artn-eng:users ${data_dir}/${dna_json}
 fi
 
 if [[ ${dry_run} -eq 1 ]]; then
