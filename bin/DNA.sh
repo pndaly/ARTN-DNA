@@ -180,9 +180,20 @@ if [[ ${send_gmail} -eq 1 ]]; then
 fi
 
 if [[ ${dry_run} -eq 1 ]]; then
+  if [[ ${over_ride} -eq 1 ]]; then
+    if [[ -f ${data_dir}/${dna_json} ]]; then
+      write_yellow "Dry-Run> mv ${data_dir}/${dna_json} ${data_dir}/${dna_json}.${today}"
+    fi
+  fi
   write_yellow "Dry-Run> touch ${data_dir}/${dna_json}"
   write_yellow "Dry-Run> chown artn-eng:users ${data_dir}/${dna_json}"
 else
+  if [[ ${over_ride} -eq 1 ]]; then
+    if [[ -f ${data_dir}/${dna_json} ]]; then
+      write_green "`date`> mv ${data_dir}/${dna_json} ${data_dir}/${dna_json}.${today}"
+      mv ${data_dir}/${dna_json} ${data_dir}/${dna_json}.${today}
+    fi
+  fi
   write_green "`date`> touch ${data_dir}/${dna_json}"
   touch ${data_dir}/${dna_json}
   write_green "`date`> chown artn-eng:users ${data_dir}/${dna_json}"
@@ -190,32 +201,12 @@ else
 fi
 
 if [[ ${dry_run} -eq 1 ]]; then
-  if [[ ${over_ride} -eq 1 ]]; then
-    write_yellow "Dry-Run> mv ${data_dir}/${dna_json} ${data_dir}/${dna_json}.${today}"
-  fi
+  write_yellow "Dry-Run> python3.7 ${dna_home}/src/dna.py ${cli_args} >> ${dna_home}/logs/dna.${dna_iso}.log && touch -t ${dna_iso}0000 ${data_dir}/${dna_json} && chown -R www-data:www-data ${dna_home}"
 else
-  if [[ ${over_ride} -eq 1 ]]; then
-    write_green "`date`> mv ${data_dir}/${dna_json} ${data_dir}/${dna_json}.${today}"
-    mv ${data_dir}/${dna_json} ${data_dir}/${dna_json}.${today}
-  fi
+  write_green "`date`> python3.7 ${dna_home}/src/dna.py ${cli_args} >> ${dna_home}/logs/dna.${dna_iso}.log && touch -t ${dna_iso}0000 ${data_dir}/${dna_json} && chown -R www-data:www-data ${dna_home}"
+  python3.7 ${dna_home}/src/dna.py ${cli_args} >> ${dna_home}/logs/dna.${dna_iso}.log && touch -t ${dna_iso}0000 ${data_dir}/${dna_json} && chown -R www-data:www-data ${dna_home}
 fi
 
-if [[ ${dry_run} -eq 1 ]]; then
-  write_yellow "Dry-Run> nohup python3.7 ${dna_home}/src/dna.py ${cli_args} >> ${dna_home}/logs/dna.${dna_iso}.log 2>&1 &"
-else
-  write_green "`date`> nohup python3.7 ${dna_home}/src/dna.py ${cli_args} >> ${dna_home}/logs/dna.${dna_iso}.log 2>&1 &"
-  nohup python3.7 ${dna_home}/src/dna.py ${cli_args} >> ${dna_home}/logs/dna.${dna_iso}.log 2>&1 &
-fi
-
-if [[ ${dry_run} -eq 1 ]]; then
-  write_yellow "Dry-Run> touch -t ${dna_iso}0000 ${data_dir}/${dna_json}"
-  write_yellow "Dry-Run> chown -R www-data:www-data ${dna_home}"
-else
-  write_green "`date`> touch -t ${dna_iso}0000 ${data_dir}/${dna_json}"
-  touch -t ${dna_iso}0000 ${data_dir}/${dna_json}
-  write_green "`date`> chown -R www-data:www-data ${dna_home}"
-  chown -R www-data:www-data ${dna_home}
-fi
 
 # +
 # exit
