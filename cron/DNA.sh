@@ -147,10 +147,10 @@ _fix_ownership () {
 
 _create_directories () {
   if [[ ${1} -eq 1 ]]; then
-    write_yellow "Dry-Run> mkdir -p ${2} ${2}/bias ${2}/calibration ${2}/dark ${2}/flat ${2}/focus ${2}/object ${2}/standard ${2}/skyflat ${2}/test ${2}/trash >> /dev/null 2>&1"
+    write_yellow "Dry-Run> mkdir -p ${2} ${2}/acquisition ${2}/archive ${2}/bias ${2}/calibration ${2}/dark ${2}/flat ${2}/focus ${2}/object ${2}/queue ${2}/standard ${2}/skyflat ${2}/test ${2}/trash >> /dev/null 2>&1"
   else
-    write_green "Executing> mkdir -p ${2} ${2}/bias ${2}/calibration ${2}/dark ${2}/flat ${2}/focus ${2}/object ${2}/standard ${2}/skyflat ${2}/test ${2}/trash >> /dev/null 2>&1"
-    mkdir -p ${2} ${2}/bias ${2}/calibration ${2}/dark ${2}/flat ${2}/focus ${2}/object ${2}/standard ${2}/skyflat ${2}/test ${2}/trash >> /dev/null 2>&1
+    write_green "Executing> mkdir -p ${2} ${2}/acquisition ${2}/archive ${2}/bias ${2}/calibration ${2}/dark ${2}/flat ${2}/focus ${2}/object ${2}/queue ${2}/standard ${2}/skyflat ${2}/test ${2}/trash >> /dev/null 2>&1"
+    mkdir -p ${2} ${2}/acquisition ${2}/archive ${2}/bias ${2}/calibration ${2}/dark ${2}/flat ${2}/focus ${2}/object ${2}/queue ${2}/standard ${2}/skyflat ${2}/test ${2}/trash >> /dev/null 2>&1
   fi
 }
 
