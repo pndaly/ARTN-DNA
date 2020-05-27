@@ -1,15 +1,15 @@
-***Arizona Robotic Telescope Network Data Notification Agent***
+# Arizona Robotic Telescope Network Data Notification Agent
 
 The ARTN-DNA software is a series of bash and 1 Python script(s) to implement `.tgz` tarball creation and
 distribution for users of the ARTN who have requested data via the *Observation Request Portal* (ARTN-ORP).
 
-*This is not a web application although it runs under the www-data account!*
+This is not a web application although it runs under the www-data account!
 
-* REQUIREMENT(s)
+### REQUIREMENT(s)
    - bash
    - Python3.7
 
-* SET UP:
+### SET UP:
     ```bash
      % cd /var/www/
      % git clone https://github.com/pndaly/ARTN-DNA.git
@@ -17,8 +17,8 @@ distribution for users of the ARTN who have requested data via the *Observation 
      % mkdir logs
      % chown -R www-data:www-data /var/www/ARTN-DNA
     ```
- 
-* CRONTAB
+    
+### CRONTAB
     ```bash
      MAILTO=""
      # +
@@ -38,24 +38,24 @@ distribution for users of the ARTN who have requested data via the *Observation 
      4 12 * * * bash /var/www/ARTN-DNA/cron/DNA.sh --tel=MMT    --ins=BinoSpec >> /tmp/DNA.cron.log 2>&1
      5 12 * * * bash /var/www/ARTN-DNA/cron/DNA.sh --tel=Vatt   --ins=Vatt4k   >> /tmp/DNA.cron.log 2>&1
      # +
-     # between 17:00 and 00:00 (midnight), run DNA.sh at 5 minute intervals
+     # between 16:00 and 00:00 (midnight), run DNA.sh at 5 minute intervals
      # -
-     1-59/5 17-23 * * * bash /var/www/ARTN-DNA/bin/DNA.sh --tel=Bok    --ins=90Prime  --gmail >> /tmp/DNA.log 2>&1
-     2-59/5 17-23 * * * bash /var/www/ARTN-DNA/bin/DNA.sh --tel=Bok    --ins=BCSpec   --gmail >> /tmp/DNA.log 2>&1
-     3-59/5 17-23 * * * bash /var/www/ARTN-DNA/bin/DNA.sh --tel=Kuiper --ins=Mont4k   --gmail >> /tmp/DNA.log 2>&1
-     4-59/5 17-23 * * * bash /var/www/ARTN-DNA/bin/DNA.sh --tel=MMT    --ins=BinoSpec --gmail >> /tmp/DNA.log 2>&1
-     5-59/5 17-23 * * * bash /var/www/ARTN-DNA/bin/DNA.sh --tel=Vatt   --ins=Vatt4k   --gmail >> /tmp/DNA.log 2>&1
+     1-59/5 16-23 * * * bash /var/www/ARTN-DNA/bin/DNA.sh --tel=Bok    --ins=90Prime  --gmail >> /tmp/DNA.log 2>&1
+     2-59/5 16-23 * * * bash /var/www/ARTN-DNA/bin/DNA.sh --tel=Bok    --ins=BCSpec   --gmail >> /tmp/DNA.log 2>&1
+     3-59/5 16-23 * * * bash /var/www/ARTN-DNA/bin/DNA.sh --tel=Kuiper --ins=Mont4k   --gmail >> /tmp/DNA.log 2>&1
+     4-59/5 16-23 * * * bash /var/www/ARTN-DNA/bin/DNA.sh --tel=MMT    --ins=BinoSpec --gmail >> /tmp/DNA.log 2>&1
+     5-59/5 16-23 * * * bash /var/www/ARTN-DNA/bin/DNA.sh --tel=Vatt   --ins=Vatt4k   --gmail >> /tmp/DNA.log 2>&1
      # +
-     # between 00:00 (midnight) and 07:00, run DNA.sh at 5 minute intervals
+     # between 00:00 (midnight) and 08:00, run DNA.sh at 5 minute intervals
      # -
-     1-59/5 0-7 * * * bash /var/www/ARTN-DNA/bin/DNA.sh --tel=Bok    --ins=90Prime  --iso=`date --date="yesterday" +\%Y\%m\%d` --gmail >> /tmp/DNA.log 2>&1
-     2-59/5 0-7 * * * bash /var/www/ARTN-DNA/bin/DNA.sh --tel=Bok    --ins=BCSpec   --iso=`date --date="yesterday" +\%Y\%m\%d` --gmail >> /tmp/DNA.log 2>&1
-     3-59/5 0-7 * * * bash /var/www/ARTN-DNA/bin/DNA.sh --tel=Kuiper --ins=Mont4k   --iso=`date --date="yesterday" +\%Y\%m\%d` --gmail >> /tmp/DNA.log 2>&1
-     4-59/5 0-7 * * * bash /var/www/ARTN-DNA/bin/DNA.sh --tel=MMT    --ins=BinoSpec --iso=`date --date="yesterday" +\%Y\%m\%d` --gmail >> /tmp/DNA.log 2>&1
-     5-59/5 0-7 * * * bash /var/www/ARTN-DNA/bin/DNA.sh --tel=Vatt   --ins=Vatt4k   --iso=`date --date="yesterday" +\%Y\%m\%d` --gmail >> /tmp/DNA.log 2>&1
+     1-59/5 0-8 * * * bash /var/www/ARTN-DNA/bin/DNA.sh --tel=Bok    --ins=90Prime  --iso=`date --date="yesterday" +\%Y\%m\%d` --gmail >> /tmp/DNA.log 2>&1
+     2-59/5 0-8 * * * bash /var/www/ARTN-DNA/bin/DNA.sh --tel=Bok    --ins=BCSpec   --iso=`date --date="yesterday" +\%Y\%m\%d` --gmail >> /tmp/DNA.log 2>&1
+     3-59/5 0-8 * * * bash /var/www/ARTN-DNA/bin/DNA.sh --tel=Kuiper --ins=Mont4k   --iso=`date --date="yesterday" +\%Y\%m\%d` --gmail >> /tmp/DNA.log 2>&1
+     4-59/5 0-8 * * * bash /var/www/ARTN-DNA/bin/DNA.sh --tel=MMT    --ins=BinoSpec --iso=`date --date="yesterday" +\%Y\%m\%d` --gmail >> /tmp/DNA.log 2>&1
+     5-59/5 0-8 * * * bash /var/www/ARTN-DNA/bin/DNA.sh --tel=Vatt   --ins=Vatt4k   --iso=`date --date="yesterday" +\%Y\%m\%d` --gmail >> /tmp/DNA.log 2>&1
     ```
 
-* RE-PROCESSING PREVIOUS DATA
+### RE-PROCESSING PREVIOUS DATA
     - Calibration data (*Eg.* for 20191205)
     ```bash
      % source /var/www/ARTN-DNA/etc/DNA.sh

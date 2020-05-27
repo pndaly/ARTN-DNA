@@ -23,7 +23,6 @@ import os
 import pytz
 import re
 import smtplib
-import sys
 import tarfile
 
 
@@ -403,7 +402,6 @@ def dna(_dna_dir=def_dna_dir, _dna_ins=def_dna_ins, _dna_iso=def_dna_iso, _dna_j
     if not isinstance(_gmail, bool):
         _gmail = False
 
-
     # +
     # set up
     # -
@@ -577,8 +575,8 @@ def dna(_dna_dir=def_dna_dir, _dna_ins=def_dna_ins, _dna_iso=def_dna_iso, _dna_j
                                         # dna_gmail_send(dna_gs, [f'{_u.email}', DNA_GMAIL_USER], DNA_GMAIL_USER, f'ARTN ORP Completed {_object_name}', _txt)
                                 # notify all user of all objects observed
                                 else:
-                                        dna_log.info(f"Case 4: sending gmail to {_u.email}, _txt={_txt}")
-                                        # dna_gmail_send(dna_gs, [f'{_u.email}', DNA_GMAIL_USER], DNA_GMAIL_USER, f'ARTN ORP Completed {_object_name}', _txt)
+                                    dna_log.info(f"Case 4: sending gmail to {_u.email}, _txt={_txt}")
+                                    # dna_gmail_send(dna_gs, [f'{_u.email}', DNA_GMAIL_USER], DNA_GMAIL_USER, f'ARTN ORP Completed {_object_name}', _txt)
                             except Exception as e:
                                 dna_log.error(f'failed to send gmail, error={e}')
 
@@ -614,6 +612,7 @@ def dna(_dna_dir=def_dna_dir, _dna_ins=def_dna_ins, _dna_iso=def_dna_iso, _dna_j
 if __name__ == '__main__':
 
     # get command line argument(s)
+    # noinspection PyTypeChecker
     _p = argparse.ArgumentParser(description=f'ARTN Data Notification Agent',
                                  formatter_class=argparse.RawTextHelpFormatter)
     _p.add_argument(f'--data', default=f'{def_dna_dir}',
