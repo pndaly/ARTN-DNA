@@ -286,8 +286,6 @@ def dna_gmail_open():
 # noinspection PyBroadException
 def dna_gmail_send(_s=None, _to=None, _from='', _subject='', _text=''):
     """ send gmail """
-    dna_log.critical('OK')
-    return
     # check input(s)
     if _s is None:
         dna_log.error(f'invalid input, _s={_s}')
@@ -593,8 +591,8 @@ def dna(_dna_dir=def_dna_dir, _dna_ins=def_dna_ins, _dna_iso=def_dna_iso, _dna_j
                                 _txt = _txt[:-1]
 
                                 try:
-                                    dna_log.info(f"sending gmail to '{_dna_user}' ({_u.email}), "
-                                                 f"object='{_dna_obj}', _txt='{_txt}'")
+                                    dna_log.info(f"sending gmail to {_element['username']} ({_element['email']}), "
+                                                 f"object='{_object_name}', _txt='{_txt}'")
                                     # notify specific user of all objects observed
                                     if _dna_user != '' and _dna_obj == '':
                                         if _dna_user.lower() in _u.email.lower():
