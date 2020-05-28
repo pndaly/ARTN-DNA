@@ -346,7 +346,8 @@ def dna(_dna_dir=def_dna_dir, _dna_ins=def_dna_ins, _dna_iso=def_dna_iso, _dna_j
     """ finds data, tarballs it up and send the user a notification on location """
 
     # entry message
-    dna_log.info(f'dna(data={_dna_dir}, json={_dna_json}, instrument={_dna_ins}, iso={_dna_iso}, object={_dna_obj}, telescope={_dna_tel}, user={_dna_user}, gmail={_gmail}) ... entry')
+    dna_log.info(f'dna(data={_dna_dir}, json={_dna_json}, instrument={_dna_ins}, iso={_dna_iso}, '
+                 f'object={_dna_obj}, telescope={_dna_tel}, user={_dna_user}, gmail={_gmail}) ... entry')
 
     # check input(s)
     _dna_dir = os.path.abspath(os.path.expanduser(f'{_dna_dir}'))
@@ -407,13 +408,20 @@ def dna(_dna_dir=def_dna_dir, _dna_ins=def_dna_ins, _dna_iso=def_dna_iso, _dna_j
     # -
     _tgzs = {
         # new
-        'bias': os.path.abspath(os.path.expanduser(os.path.join(DNA_TGZ_DIR, f'{_dna_tel}.{_dna_ins}.{_dna_iso}.bias.tgz'))),
-        'calibration': os.path.abspath(os.path.expanduser(os.path.join(DNA_TGZ_DIR, f'{_dna_tel}.{_dna_ins}.{_dna_iso}.calibration.tgz'))),
-        'dark': os.path.abspath(os.path.expanduser(os.path.join(DNA_TGZ_DIR, f'{_dna_tel}.{_dna_ins}.{_dna_iso}.dark.tgz'))),
-        'flat': os.path.abspath(os.path.expanduser(os.path.join(DNA_TGZ_DIR, f'{_dna_tel}.{_dna_ins}.{_dna_iso}.flat.tgz'))),
-        'focus': os.path.abspath(os.path.expanduser(os.path.join(DNA_TGZ_DIR, f'{_dna_tel}.{_dna_ins}.{_dna_iso}.focus.tgz'))),
-        'skyflat': os.path.abspath(os.path.expanduser(os.path.join(DNA_TGZ_DIR, f'{_dna_tel}.{_dna_ins}.{_dna_iso}.skyflat.tgz'))),
-        'standard': os.path.abspath(os.path.expanduser(os.path.join(DNA_TGZ_DIR, f'{_dna_tel}.{_dna_ins}.{_dna_iso}.standard.tgz'))),
+        'bias': os.path.abspath(
+            os.path.expanduser(os.path.join(DNA_TGZ_DIR, f'{_dna_tel}.{_dna_ins}.{_dna_iso}.bias.tgz'))),
+        'calibration': os.path.abspath(
+            os.path.expanduser(os.path.join(DNA_TGZ_DIR, f'{_dna_tel}.{_dna_ins}.{_dna_iso}.calibration.tgz'))),
+        'dark': os.path.abspath(
+            os.path.expanduser(os.path.join(DNA_TGZ_DIR, f'{_dna_tel}.{_dna_ins}.{_dna_iso}.dark.tgz'))),
+        'flat': os.path.abspath(
+            os.path.expanduser(os.path.join(DNA_TGZ_DIR, f'{_dna_tel}.{_dna_ins}.{_dna_iso}.flat.tgz'))),
+        'focus': os.path.abspath(
+            os.path.expanduser(os.path.join(DNA_TGZ_DIR, f'{_dna_tel}.{_dna_ins}.{_dna_iso}.focus.tgz'))),
+        'skyflat': os.path.abspath(
+            os.path.expanduser(os.path.join(DNA_TGZ_DIR, f'{_dna_tel}.{_dna_ins}.{_dna_iso}.skyflat.tgz'))),
+        'standard': os.path.abspath(
+            os.path.expanduser(os.path.join(DNA_TGZ_DIR, f'{_dna_tel}.{_dna_ins}.{_dna_iso}.standard.tgz'))),
         # legacy
         'darks': os.path.abspath(os.path.expanduser(os.path.join(DNA_TGZ_DIR, f'darks.{_dna_iso}.tgz'))),
         'skyflats': os.path.abspath(os.path.expanduser(os.path.join(DNA_TGZ_DIR, f'skyflats.{_dna_iso}.tgz')))
@@ -474,7 +482,8 @@ def dna(_dna_dir=def_dna_dir, _dna_ins=def_dna_ins, _dna_iso=def_dna_iso, _dna_j
                 if (isinstance(_gid, str) and _gid.strip() == '') or \
                    (isinstance(_oid, str) and _oid.strip() == '') or \
                    _size not in DNA_MONT4K_SIZES:
-                    dna_log.error(f'invalid headers or size, _file={_file}, _gid={_gid}, _oid={_oid}, _tgt={_tgt}, _size={_size}')
+                    dna_log.error(f'invalid headers or size, _file={_file}, _gid={_gid}, '
+                                  f'_oid={_oid}, _tgt={_tgt}, _size={_size}')
                     continue
             else:
                 _gid = f"{os.path.basename(_file).replace('-', '').replace('.', '').lower()}gid"
@@ -510,94 +519,93 @@ def dna(_dna_dir=def_dna_dir, _dna_ins=def_dna_ins, _dna_iso=def_dna_iso, _dna_j
                 _obsreq = obsreq_filters(_obsreq, {'group_id': f'{_gid}', 'observation_id': f'{_oid}'})
             except Exception as _e:
                 dna_log.warning(f'failed to query obsreq table, error={_e}')
-                # continue
+            else:
+                # update record(s)
+                for _q in _obsreq.all():
 
-            # update record(s)
-            for _q in _obsreq.all():
-
-                dna_log.info(f"query obsreq table, _q.username={_q.username},_q.user_id={_q.user_id}")
-
-                # get user/owner
-                _element['user'] = _q.username
-
-                # tell user (if desired)
-                if len(_gid_dict[f'{_gid}']) == _q.num_exp:
-
-                    # increment counter and save if complete
-                    _q.completed = True
-                    try:
-                        dna_db.commit()
-                    except Exception as _e:
-                        dna_db.rollback()
-                        dna_log.error(f'failed to commit to obsreq table, error=_{_e}')
-                        continue
+                    dna_log.info(f"query obsreq table, _q.username={_q.username},_q.user_id={_q.user_id}")
 
                     # get user/owner
-                    _user = None
-                    try:
-                        _user = dna_db.query(User)
-                        _user = user_filters(_user, {'user_id': f'{_q.user_id}', 'username': f'{_q.username}'})
-                    except Exception as e:
-                        dna_log.error(f'failed to execute user query, error={e}')
-                        continue
+                    _element['user'] = _q.username
 
-                    # gmail user
-                    for _u in _user.all():
+                    # tell user (if desired)
+                    if len(_gid_dict[f'{_gid}']) == _q.num_exp:
 
-                        _element['email'] = _u.email
+                        # increment counter and save if complete
+                        _q.completed = True
+                        try:
+                            dna_db.commit()
+                        except Exception as _e:
+                            dna_db.rollback()
+                            dna_log.error(f'failed to commit to obsreq table, error=_{_e}')
+                            continue
 
-                        # zip all files in this dataset
-                        _tgz = os.path.abspath(os.path.expanduser(
-                                               os.path.join(DNA_TGZ_DIR, 
-                                                            f'{_dna_tel}.{_dna_ins}.{_dna_iso}.{_u.username}.{_q.rts2_id}.tgz')))
-                        if _gid_dict[f'{_gid}'] is not []:
-                            dna_log.info(f'creating archive {_tgz}')
-                            with tarfile.open(f'{_tgz}', mode='w:gz') as _wf:
-                                for _fz in _gid_dict[f'{_gid}']:
-                                    dna_log.info(f'adding {_fz} to {_tgz}')
-                                    _wf.add(f'{_fz}')
+                        # get user/owner
+                        _user = None
+                        try:
+                            _user = dna_db.query(User)
+                            _user = user_filters(_user, {'user_id': f'{_q.user_id}', 'username': f'{_q.username}'})
+                        except Exception as e:
+                            dna_log.error(f'failed to execute user query, error={e}')
+                            continue
 
-                        if _gmail:
-                            _object_name = decode_verboten(_q.object_name, ARTN_DECODE_DICT)
-                            _txt = f'{_object_name} observed using the {_q.telescope} telescope with {_q.instrument}\n' \
-                                f'RA: {_q.ra_hms}]  Dec: {_q.dec_dms}  Epoch: J2000\n' \
-                                f'{_q.num_exp} x {_q.exp_time}s exposures, in the {_q.filter_name} filter, at airmass {_q.airmass}\n' \
-                                f'Data archive: https://scopenet.as.arizona.edu/orp/files/{os.path.basename(_tgz)}\n' \
-                                f'NB: Calibration data may not be available until 08:00 the following day (or at all!)\n'
-                            for _k, _v in _tgzs.items():
-                                if os.path.exists(f'{_v}'):
-                                    _txt += f'{_k[0].upper()}{_k[1:]} archive: https://scopenet.as.arizona.edu/orp/files/{os.path.basename(_v)}\n' 
-                            _txt = _txt[:-1]
+                        # gmail user
+                        for _u in _user.all():
 
-                            try:
-                                # notify specific user of all objects observed
-                                if _dna_user != '' and _dna_obj == '':
-                                    if _dna_user.lower() in _u.email.lower():
-                                        dna_log.info(f"Case 1: sending gmail to {_dna_user} ({_u.email}), _txt={_txt}")
+                            _element['email'] = _u.email
+
+                            # zip all files in this dataset
+                            _tgz = os.path.abspath(os.path.expanduser(
+                                                   os.path.join(DNA_TGZ_DIR,
+                                                                f'{_dna_tel}.{_dna_ins}.{_dna_iso}.{_u.username}.{_q.rts2_id}.tgz')))
+                            if _gid_dict[f'{_gid}'] is not []:
+                                dna_log.info(f'creating archive {_tgz}')
+                                with tarfile.open(f'{_tgz}', mode='w:gz') as _wf:
+                                    for _fz in _gid_dict[f'{_gid}']:
+                                        dna_log.info(f'adding {_fz} to {_tgz}')
+                                        _wf.add(f'{_fz}')
+
+                            if _gmail:
+                                _object_name = decode_verboten(_q.object_name, ARTN_DECODE_DICT)
+                                _txt = f'{_object_name} observed using the {_q.telescope} telescope with {_q.instrument}\n' \
+                                    f'RA: {_q.ra_hms}]  Dec: {_q.dec_dms}  Epoch: J2000\n' \
+                                    f'{_q.num_exp} x {_q.exp_time}s exposures, in the {_q.filter_name} filter, at airmass {_q.airmass}\n' \
+                                    f'Data archive: https://scopenet.as.arizona.edu/orp/files/{os.path.basename(_tgz)}\n' \
+                                    f'NB: Calibration data may not be available until 08:00 the following day (or at all!)\n'
+                                for _k, _v in _tgzs.items():
+                                    if os.path.exists(f'{_v}'):
+                                        _txt += f'{_k[0].upper()}{_k[1:]} archive: https://scopenet.as.arizona.edu/orp/files/{os.path.basename(_v)}\n'
+                                _txt = _txt[:-1]
+
+                                try:
+                                    # notify specific user of all objects observed
+                                    if _dna_user != '' and _dna_obj == '':
+                                        if _dna_user.lower() in _u.email.lower():
+                                            dna_log.info(f"Case 1: sending gmail to {_dna_user} ({_u.email}), _txt={_txt}")
+                                            # dna_gmail_send(dna_gs, [f'{_u.email}', DNA_GMAIL_USER], DNA_GMAIL_USER, f'ARTN ORP Completed {_object_name}', _txt)
+                                    # notify all user(s) of specific objects observed
+                                    elif _dna_user == '' and _dna_obj != '':
+                                        if _dna_obj.lower() in _object_name.lower():
+                                            dna_log.info(f"Case 2: sending gmail to {_u.email}, object={_dna_obj}, _txt={_txt}")
+                                            # dna_gmail_send(dna_gs, [f'{_u.email}', DNA_GMAIL_USER], DNA_GMAIL_USER, f'ARTN ORP Completed {_object_name}', _txt)
+                                    # notify specific user of specific objects observed
+                                    elif _dna_user != '' and _dna_obj != '':
+                                        if _dna_user.lower() in _u.email.lower() and _dna_obj.lower() in _object_name.lower():
+                                            dna_log.info(f"Case 3: sending gmail to {_dna_user} ({_u.email}), object={_dna_obj}, _txt={_txt}")
+                                            # dna_gmail_send(dna_gs, [f'{_u.email}', DNA_GMAIL_USER], DNA_GMAIL_USER, f'ARTN ORP Completed {_object_name}', _txt)
+                                    # notify all user of all objects observed
+                                    else:
+                                        dna_log.info(f"Case 4: sending gmail to {_u.email}, _txt={_txt}")
                                         # dna_gmail_send(dna_gs, [f'{_u.email}', DNA_GMAIL_USER], DNA_GMAIL_USER, f'ARTN ORP Completed {_object_name}', _txt)
-                                # notify all user(s) of specific objects observed
-                                elif _dna_user == '' and _dna_obj != '':
-                                    if _dna_obj.lower() in _object_name.lower():
-                                        dna_log.info(f"Case 2: sending gmail to {_u.email}, object={_dna_obj}, _txt={_txt}")
-                                        # dna_gmail_send(dna_gs, [f'{_u.email}', DNA_GMAIL_USER], DNA_GMAIL_USER, f'ARTN ORP Completed {_object_name}', _txt)
-                                # notify specific user of specific objects observed
-                                elif _dna_user != '' and _dna_obj != '':
-                                    if _dna_user.lower() in _u.email.lower() and _dna_obj.lower() in _object_name.lower():
-                                        dna_log.info(f"Case 3: sending gmail to {_dna_user} ({_u.email}), object={_dna_obj}, _txt={_txt}")
-                                        # dna_gmail_send(dna_gs, [f'{_u.email}', DNA_GMAIL_USER], DNA_GMAIL_USER, f'ARTN ORP Completed {_object_name}', _txt)
-                                # notify all user of all objects observed
-                                else:
-                                    dna_log.info(f"Case 4: sending gmail to {_u.email}, _txt={_txt}")
-                                    # dna_gmail_send(dna_gs, [f'{_u.email}', DNA_GMAIL_USER], DNA_GMAIL_USER, f'ARTN ORP Completed {_object_name}', _txt)
-                            except Exception as e:
-                                dna_log.error(f'failed to send gmail, error={e}')
-
-            # add it to the json data structure
-            if all(_k in _element for _k in ('file', 'size', 'gid', 'oid', 'tgt', 'email', 'user', 'timestamp')):
-                dna_log.info(f'processed {_element}')
-                dna_json.append(_element)
-            else:
-                dna_log.warning(f'missing keys in dna json, keys={_element.keys()}')
+                                except Exception as e:
+                                    dna_log.error(f'failed to send gmail, error={e}')
+            finally:
+                # add it to the json data structure
+                if all(_k in _element for _k in ('file', 'size', 'gid', 'oid', 'tgt', 'email', 'user', 'timestamp')):
+                    dna_log.info(f'processed {_element}')
+                    dna_json.append(_element)
+                else:
+                    dna_log.warning(f'missing keys in dna json, keys={_element.keys()}')
 
     # +
     # shut down
