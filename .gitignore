@@ -9,6 +9,7 @@ __pycache__
 # -
 *.dmg
 *.gz
+*.old
 *.tar
 *.tgz
 *.zip

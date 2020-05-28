@@ -463,13 +463,25 @@ def dna(_dna_dir=def_dna_dir, _dna_ins=def_dna_ins, _dna_iso=def_dna_iso, _dna_j
             else:
                 dna_log.info(f'processing {_file}')
 
+            # find observation type from directory structure
+            _obstype = os.path.basename(os.path.dirname(_file)).lower()
+            _user = ''
+            _email = ''
+
             # if group_id, observation_id or _size is invalid, continue
-            _gid, _oid, _tgt = dna_artn_ids(f'{_file}')
-            if (isinstance(_gid, str) and _gid.strip() == '') or \
-               (isinstance(_oid, str) and _oid.strip() == '') or \
-               _size not in DNA_MONT4K_SIZES:
-                dna_log.error(f'invalid headers or size, _file={_file}, _gid={_gid}, _oid={_oid}, _tgt={_tgt}, _size={_size}')
-                continue
+            if _obstype == 'object':
+                _gid, _oid, _tgt = dna_artn_ids(f'{_file}')
+                if (isinstance(_gid, str) and _gid.strip() == '') or \
+                   (isinstance(_oid, str) and _oid.strip() == '') or \
+                   _size not in DNA_MONT4K_SIZES:
+                    dna_log.error(f'invalid headers or size, _file={_file}, _gid={_gid}, _oid={_oid}, _tgt={_tgt}, _size={_size}')
+                    continue
+            else:
+                _gid = f"{os.path.basename(_file).replace('-', '').replace('.', '').lower()}gid"
+                _oid = f"{os.path.basename(_file).replace('-', '').replace('.', '').lower()}oid"
+                _tgt = _obstype
+                _user = 'rts2'
+                _email = 'rts2.operator@gmail.com'
 
             # populate dictionary with this file
             if f'{_gid}' not in _gid_dict:
@@ -481,8 +493,8 @@ def dna(_dna_dir=def_dna_dir, _dna_ins=def_dna_ins, _dna_iso=def_dna_iso, _dna_j
             # create new entry
             _element = {
                 'file': f'{_file}',
-                'user': f'',
-                'email': f'',
+                'user': f'{_user}',
+                'email': f'{_email}',
                 'gid': f'{_gid}',
                 'oid': f'{_oid}',
                 'tgt': f'{_tgt}',
@@ -497,8 +509,8 @@ def dna(_dna_dir=def_dna_dir, _dna_ins=def_dna_ins, _dna_iso=def_dna_iso, _dna_j
                 _obsreq = dna_db.query(ObsReq)
                 _obsreq = obsreq_filters(_obsreq, {'group_id': f'{_gid}', 'observation_id': f'{_oid}'})
             except Exception as _e:
-                dna_log.error(f'failed to query obsreq table, error={_e}')
-                continue
+                dna_log.warning(f'failed to query obsreq table, error={_e}')
+                # continue
 
             # update record(s)
             for _q in _obsreq.all():
