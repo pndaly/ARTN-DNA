@@ -591,7 +591,7 @@ def dna(_dna_dir=def_dna_dir, _dna_ins=def_dna_ins, _dna_iso=def_dna_iso, _dna_j
                                 _txt = _txt[:-1]
 
                                 try:
-                                    dna_log.info(f"sending gmail to {_element['username']} ({_element['email']}), "
+                                    dna_log.info(f"sending gmail to {_q.username} ({_u.email}), "
                                                  f"object='{_object_name}', _txt='{_txt}'")
                                     # notify specific user of all objects observed
                                     if _dna_user != '' and _dna_obj == '':
