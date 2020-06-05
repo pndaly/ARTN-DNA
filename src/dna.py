@@ -38,11 +38,16 @@ __doc__ = """
 # constant(s)
 # -
 DNA_TGZ_DIR = '/var/www/ARTN-ORP/instance/files'
-DNA_COLOR_FORMAT = '%(log_color)s%(asctime)-20s %(levelname)-7s %(filename)-5s line:%(lineno)-5d Message: %(message)s'
-DNA_CONSOLE_FORMAT = '%(asctime)-20s %(levelname)-5s %(filename)-7s line:%(lineno)-5d Message: %(message)s'
 DNA_ISO_MATCH = re.compile(r'\d{8}')
-DNA_LOGFILE_FORMAT = '%(asctime)-20s %(levelname)-5s %(filename)-7s line:%(lineno)-5d Message: %(message)s'
-DNA_MAX_BYTES = 9223372036854775807
+DNA_LOG_CLR_FMT = \
+    '%(log_color)s%(asctime)-20s %(levelname)-9s %(filename)-15s %(funcName)-15s line:%(lineno)-5d Message: %(message)s'
+DNA_LOG_CSL_FMT = \
+    '%(asctime)-20s %(levelname)-9s %(filename)-15s %(funcName)-15s line:%(lineno)-5d Message: %(message)s'
+DNA_LOG_FIL_FMT = \
+    '%(asctime)-20s %(levelname)-9s %(filename)-15s %(funcName)-15s line:%(lineno)-5d Message: %(message)s'
+DNA_LOG_LEVELS = ['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL']
+DNA_LOG_WWW_DIR = '/var/www/ARTN-DNA/logs'
+DNA_LOG_MAX_BYTES = 9223372036854775807
 DNA_MONT4K_SIZES = [
     2880, 11520, 14400, 20480, 49152, 57600, 256000, 358400, 432128, 
     655360, 2206080, 3841920, 3856320, 3859200, 3862080, 3864960, 3867840, 
@@ -83,7 +88,7 @@ DNA_GMAIL_USER = os.getenv("MAIL_USERNAME", None)
 
 
 # +
-# class: DnaLogger()
+# class: DnaLogger() inherits from the object class
 # -
 # noinspection PyBroadException
 class DnaLogger(object):
@@ -91,24 +96,34 @@ class DnaLogger(object):
     # +
     # method: __init__
     # -
-    def __init__(self, name=''):
+    def __init__(self, name='', level='DEBUG'):
 
+        # get arguments(s)
         self.name = name
-        logname = '{}'.format(self.__name)
+        self.level = level
 
-        try:
-            logfile = '{}/{}.log'.format(os.getenv("DNA_LOGS"), logname)
-        except Exception:
-            logfile = '{}/{}.log'.format(os.getcwd(), logname)
-        logconsole = '/tmp/console-{}.log'.format(logname)
+        # define some variables and initialize them
+        self.__msg = None
+        self.__logconsole = f'/tmp/console-{self.__name}.log'
+        self.__logdir = os.getenv("DNA_LOGS", f"{DNA_LOG_WWW_DIR}")
+        if not os.path.exists(self.__logdir) or not os.access(self.__logdir, os.W_OK):
+            self.__logdir = os.getcwd()
+        self.__logfile = f'{self.__logdir}/{self.__name}.log'
 
+        # logger dictionary
         utils_logger_dictionary = {
+
+            # logging version
             'version': 1,
+
+            # do not disable any existing loggers
             'disable_existing_loggers': False,
+
+            # use the same formatter for everything
             'formatters': {
                 'DnaColoredFormatter': {
                     '()': 'colorlog.ColoredFormatter',
-                    'format': DNA_COLOR_FORMAT,
+                    'format': DNA_LOG_CLR_FMT,
                     'log_colors': {
                         'DEBUG': 'cyan',
                         'INFO': 'green',
@@ -118,54 +133,59 @@ class DnaLogger(object):
                     }
                 },
                 'DnaConsoleFormatter': {
-                    'format': DNA_CONSOLE_FORMAT
+                    'format': DNA_LOG_CSL_FMT
                 },
                 'DnaFileFormatter': {
-                    'format': DNA_LOGFILE_FORMAT
+                    'format': DNA_LOG_FIL_FMT
                 }
             },
 
+            # define file and console handlers
             'handlers': {
                 'colored': {
                     'class': 'logging.StreamHandler',
                     'formatter': 'DnaColoredFormatter',
-                    'level': 'DEBUG',
+                    'level': self.__level,
                 },
                 'console': {
                     'class': 'logging.StreamHandler',
                     'formatter': 'DnaConsoleFormatter',
-                    'level': 'DEBUG',
+                    'level': self.__level,
                     'stream': 'ext://sys.stdout'
                 },
                 'file': {
                     'backupCount': 10,
                     'class': 'logging.handlers.RotatingFileHandler',
                     'formatter': 'DnaFileFormatter',
-                    'filename': logfile,
-                    'level': 'DEBUG',
-                    'maxBytes': DNA_MAX_BYTES
+                    'filename': self.__logfile,
+                    'level': self.__level,
+                    'maxBytes': DNA_LOG_MAX_BYTES
                 },
                 'utils': {
                     'backupCount': 10,
                     'class': 'logging.handlers.RotatingFileHandler',
                     'formatter': 'DnaFileFormatter',
-                    'filename': logconsole,
-                    'level': 'DEBUG',
-                    'maxBytes': DNA_MAX_BYTES
+                    'filename': self.__logconsole,
+                    'level': self.__level,
+                    'maxBytes': DNA_LOG_MAX_BYTES
                 }
             },
 
+            # make this logger use file and console handlers
             'loggers': {
-                logname: {
+                self.__name: {
                     'handlers': ['colored', 'file', 'utils'],
-                    'level': 'DEBUG',
+                    'level': self.__level,
                     'propagate': True
                 }
             }
         }
 
+        # configure logger
         logging.config.dictConfig(utils_logger_dictionary)
-        self.logger = logging.getLogger(logname)
+
+        # get logger
+        self.logger = logging.getLogger(self.__name)
 
     # +
     # Decorator(s)
@@ -178,6 +198,14 @@ class DnaLogger(object):
     def name(self, name=''):
         self.__name = name if (isinstance(name, str) and name.strip() != '') else os.getenv('USER')
 
+    @property
+    def level(self):
+        return self.__level
+
+    @level.setter
+    def level(self, level=''):
+        self.__level = level.upper() if \
+            (isinstance(level, str) and level.strip() != '' and level.upper() in DNA_LOG_LEVELS) else DNA_LOG_LEVELS[0]
 
 # +
 # variable(s)
