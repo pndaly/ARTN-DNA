@@ -578,7 +578,7 @@ def dna(_dna_dir=def_dna_dir, _dna_ins=def_dna_ins, _dna_iso=def_dna_iso, _dna_j
                             if _gmail:
                                 _object_name = decode_verboten(_q.object_name, ARTN_DECODE_DICT)
                                 _txt = f'{_object_name} observed using the {_q.telescope} telescope with ' \
-                                       f'{_q.instrument}\nRA: {_q.ra_hms}]  Dec: {_q.dec_dms}  Epoch: J2000\n' \
+                                       f'{_q.instrument}\nRA: {_q.ra_hms}  Dec: {_q.dec_dms}  Epoch: J2000\n' \
                                        f'{_q.num_exp} x {_q.exp_time}s exposures, in the {_q.filter_name} filter, ' \
                                        f'at airmass {_q.airmass}\nData archive: ' \
                                        f'https://scopenet.as.arizona.edu/orp/files/{os.path.basename(_tgz)}\n' \
