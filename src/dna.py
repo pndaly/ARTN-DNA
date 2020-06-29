@@ -6,11 +6,14 @@
 # -
 from astropy.io import fits
 from datetime import datetime
+from datetime import timedelta
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
 # noinspection PyUnresolvedReferences,PyUnresolvedReferences,PyUnresolvedReferences,PyUnresolvedReferences
-from src import ARTN_ENCODE_DICT, ARTN_DECODE_DICT, encode_verboten, decode_verboten
+from src import ARTN_ZERO_ISO, ARTN_ZERO_MJD, ARTN_ENCODE_DICT, ARTN_DECODE_DICT
+# noinspection PyUnresolvedReferences,PyUnresolvedReferences,PyUnresolvedReferences,PyUnresolvedReferences
+from src import encode_verboten, decode_verboten, get_iso
 # noinspection PyUnresolvedReferences,PyUnresolvedReferences,PyUnresolvedReferences
 from src.models.Models import ObsReq, obsreq_filters, User, user_filters
 
@@ -563,6 +566,9 @@ def dna(_dna_dir=def_dna_dir, _dna_ins=def_dna_ins, _dna_iso=def_dna_iso, _dna_j
 
                         # increment counter and save if complete
                         _q.completed = True
+                        _iso = get_iso()
+                        _q.completed_iso = _iso
+                        _q.completed_mjd = mjd_to_iso(_iso)
                         try:
                             dna_db.commit()
                         except Exception as _e:
