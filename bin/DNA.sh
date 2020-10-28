@@ -201,9 +201,9 @@ else
 fi
 
 if [[ ${dry_run} -eq 1 ]]; then
-  write_yellow "Dry-Run> python3.7 ${dna_home}/src/dna.py ${cli_args} >> ${dna_home}/logs/dna.${dna_iso}.log && touch -t ${dna_iso}0000 ${data_dir}/${dna_json} && chown -R www-data:www-data ${dna_home}"
+  write_yellow "Dry-Run> python3.7 ${dna_home}/src/dna.py ${cli_args} >> ${dna_home}/logs/dna.${dna_tel}.${dna_ins}.${dna_iso}.log 2&>1 && touch -t ${dna_iso}0000 ${data_dir}/${dna_json} && chown -R www-data:www-data ${dna_home}"
 else
-  write_green "`date`> python3.7 ${dna_home}/src/dna.py ${cli_args} >> ${dna_home}/logs/dna.${dna_iso}.log && touch -t ${dna_iso}0000 ${data_dir}/${dna_json} && chown -R www-data:www-data ${dna_home}"
+  write_green "`date`> python3.7 ${dna_home}/src/dna.py ${cli_args} >> ${dna_home}/logs/dna.${dna_tel}.${dna_ins}.${dna_iso}.log 2&>1 && touch -t ${dna_iso}0000 ${data_dir}/${dna_json} && chown -R www-data:www-data ${dna_home}"
   python3.7 ${dna_home}/src/dna.py ${cli_args} >> ${dna_home}/logs/dna.${dna_iso}.log && touch -t ${dna_iso}0000 ${data_dir}/${dna_json} && chown -R www-data:www-data ${dna_home}
 fi
 

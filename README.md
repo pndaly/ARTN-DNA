@@ -24,35 +24,35 @@ This is not a web application although it runs under the www-data account!
      # +
      # after 08:00, create yesterday's calibration tarballs
      # -
-     1 8 * * * bash /var/www/ARTN-DNA/cron/TGZ.sh --tel=Bok    --ins=90Prime  --iso=`date --date="yesterday" +\%Y\%m\%d` >> /tmp/TGZ.cron.log 2>&1
-     2 8 * * * bash /var/www/ARTN-DNA/cron/TGZ.sh --tel=Bok    --ins=BCSpec   --iso=`date --date="yesterday" +\%Y\%m\%d` >> /tmp/TGZ.cron.log 2>&1
-     3 8 * * * bash /var/www/ARTN-DNA/cron/TGZ.sh --tel=Kuiper --ins=Mont4k   --iso=`date --date="yesterday" +\%Y\%m\%d` >> /tmp/TGZ.cron.log 2>&1
-     4 8 * * * bash /var/www/ARTN-DNA/cron/TGZ.sh --tel=MMT    --ins=BinoSpec --iso=`date --date="yesterday" +\%Y\%m\%d` >> /tmp/TGZ.cron.log 2>&1
-     5 8 * * * bash /var/www/ARTN-DNA/cron/TGZ.sh --tel=Vatt   --ins=Vatt4k   --iso=`date --date="yesterday" +\%Y\%m\%d` >> /tmp/TGZ.cron.log 2>&1
+     1 8 * * * bash /var/www/ARTN-DNA/cron/TGZ.sh --tel=Bok    --ins=90Prime  --iso=`date --date="yesterday" +\%Y\%m\%d` >> /tmp/TGZ.Bok.90Prime.log 2>&1
+     2 8 * * * bash /var/www/ARTN-DNA/cron/TGZ.sh --tel=Bok    --ins=BCSpec   --iso=`date --date="yesterday" +\%Y\%m\%d` >> /tmp/TGZ.Bok.BCSPec.log 2>&1
+     3 8 * * * bash /var/www/ARTN-DNA/cron/TGZ.sh --tel=Kuiper --ins=Mont4k   --iso=`date --date="yesterday" +\%Y\%m\%d` >> /tmp/TGZ.Kuiper.Mont4k.log 2>&1
+     4 8 * * * bash /var/www/ARTN-DNA/cron/TGZ.sh --tel=MMT    --ins=BinoSpec --iso=`date --date="yesterday" +\%Y\%m\%d` >> /tmp/TGZ.MMT.BinoSpec.log 2>&1
+     5 8 * * * bash /var/www/ARTN-DNA/cron/TGZ.sh --tel=Vatt   --ins=Vatt4k   --iso=`date --date="yesterday" +\%Y\%m\%d` >> /tmp/TGZ.Vatt.Vatt4k.log 2>&1
      # +
      # after 12:00 (noon), create tonight's observing files
      # -
-     1 12 * * * bash /var/www/ARTN-DNA/cron/DNA.sh --tel=Bok    --ins=90Prime  >> /tmp/DNA.cron.log 2>&1
-     2 12 * * * bash /var/www/ARTN-DNA/cron/DNA.sh --tel=Bok    --ins=BCSpec   >> /tmp/DNA.cron.log 2>&1
-     3 12 * * * bash /var/www/ARTN-DNA/cron/DNA.sh --tel=Kuiper --ins=Mont4k   >> /tmp/DNA.cron.log 2>&1
-     4 12 * * * bash /var/www/ARTN-DNA/cron/DNA.sh --tel=MMT    --ins=BinoSpec >> /tmp/DNA.cron.log 2>&1
-     5 12 * * * bash /var/www/ARTN-DNA/cron/DNA.sh --tel=Vatt   --ins=Vatt4k   >> /tmp/DNA.cron.log 2>&1
+     1 12 * * * bash /var/www/ARTN-DNA/cron/DNA.sh --tel=Bok    --ins=90Prime  >> /tmp/OBS.Bok.90Prime.log 2>&1
+     2 12 * * * bash /var/www/ARTN-DNA/cron/DNA.sh --tel=Bok    --ins=BCSpec   >> /tmp/OBS.Bok.BCSpec.log 2>&1
+     3 12 * * * bash /var/www/ARTN-DNA/cron/DNA.sh --tel=Kuiper --ins=Mont4k   >> /tmp/OBS.Kuiper.Mont4k.log 2>&1
+     4 12 * * * bash /var/www/ARTN-DNA/cron/DNA.sh --tel=MMT    --ins=BinoSpec >> /tmp/OBS.MMT.BinoSpec.log 2>&1
+     5 12 * * * bash /var/www/ARTN-DNA/cron/DNA.sh --tel=Vatt   --ins=Vatt4k   >> /tmp/OBS.Vatt.Vatt4k.log 2>&1
      # +
      # between 16:00 and 00:00 (midnight), run DNA.sh at 5 minute intervals
      # -
-     1-59/5 16-23 * * * bash /var/www/ARTN-DNA/bin/DNA.sh --tel=Bok    --ins=90Prime  --gmail >> /tmp/DNA.log 2>&1
-     2-59/5 16-23 * * * bash /var/www/ARTN-DNA/bin/DNA.sh --tel=Bok    --ins=BCSpec   --gmail >> /tmp/DNA.log 2>&1
-     3-59/5 16-23 * * * bash /var/www/ARTN-DNA/bin/DNA.sh --tel=Kuiper --ins=Mont4k   --gmail >> /tmp/DNA.log 2>&1
-     4-59/5 16-23 * * * bash /var/www/ARTN-DNA/bin/DNA.sh --tel=MMT    --ins=BinoSpec --gmail >> /tmp/DNA.log 2>&1
-     5-59/5 16-23 * * * bash /var/www/ARTN-DNA/bin/DNA.sh --tel=Vatt   --ins=Vatt4k   --gmail >> /tmp/DNA.log 2>&1
+     1-59/5 16-23 * * * bash /var/www/ARTN-DNA/bin/DNA.sh --tel=Bok    --ins=90Prime  --gmail >> /tmp/DNA.Bok.90Prime.log 2>&1
+     2-59/5 16-23 * * * bash /var/www/ARTN-DNA/bin/DNA.sh --tel=Bok    --ins=BCSpec   --gmail >> /tmp/DNA.Bok.BCSpec.log 2>&1
+     3-59/5 16-23 * * * bash /var/www/ARTN-DNA/bin/DNA.sh --tel=Kuiper --ins=Mont4k   --gmail >> /tmp/DNA.Kuiper.Mont4k.log 2>&1
+     4-59/5 16-23 * * * bash /var/www/ARTN-DNA/bin/DNA.sh --tel=MMT    --ins=BinoSpec --gmail >> /tmp/DNA.MMT.BinoSpec.log 2>&1
+     5-59/5 16-23 * * * bash /var/www/ARTN-DNA/bin/DNA.sh --tel=Vatt   --ins=Vatt4k   --gmail >> /tmp/DNA.Vatt.Vatt4k.log 2>&1
      # +
      # between 00:00 (midnight) and 08:00, run DNA.sh at 5 minute intervals
      # -
-     1-59/5 0-8 * * * bash /var/www/ARTN-DNA/bin/DNA.sh --tel=Bok    --ins=90Prime  --iso=`date --date="yesterday" +\%Y\%m\%d` --gmail >> /tmp/DNA.log 2>&1
-     2-59/5 0-8 * * * bash /var/www/ARTN-DNA/bin/DNA.sh --tel=Bok    --ins=BCSpec   --iso=`date --date="yesterday" +\%Y\%m\%d` --gmail >> /tmp/DNA.log 2>&1
-     3-59/5 0-8 * * * bash /var/www/ARTN-DNA/bin/DNA.sh --tel=Kuiper --ins=Mont4k   --iso=`date --date="yesterday" +\%Y\%m\%d` --gmail >> /tmp/DNA.log 2>&1
-     4-59/5 0-8 * * * bash /var/www/ARTN-DNA/bin/DNA.sh --tel=MMT    --ins=BinoSpec --iso=`date --date="yesterday" +\%Y\%m\%d` --gmail >> /tmp/DNA.log 2>&1
-     5-59/5 0-8 * * * bash /var/www/ARTN-DNA/bin/DNA.sh --tel=Vatt   --ins=Vatt4k   --iso=`date --date="yesterday" +\%Y\%m\%d` --gmail >> /tmp/DNA.log 2>&1
+     1-59/5 0-8 * * * bash /var/www/ARTN-DNA/bin/DNA.sh --tel=Bok    --ins=90Prime  --iso=`date --date="yesterday" +\%Y\%m\%d` --gmail >> /tmp/DNA.Bok.90Prime.log 2>&1
+     2-59/5 0-8 * * * bash /var/www/ARTN-DNA/bin/DNA.sh --tel=Bok    --ins=BCSpec   --iso=`date --date="yesterday" +\%Y\%m\%d` --gmail >> /tmp/DNA.Bok.BCSpec.log 2>&1
+     3-59/5 0-8 * * * bash /var/www/ARTN-DNA/bin/DNA.sh --tel=Kuiper --ins=Mont4k   --iso=`date --date="yesterday" +\%Y\%m\%d` --gmail >> /tmp/DNA.Kuiper.Mont4k.log 2>&1
+     4-59/5 0-8 * * * bash /var/www/ARTN-DNA/bin/DNA.sh --tel=MMT    --ins=BinoSpec --iso=`date --date="yesterday" +\%Y\%m\%d` --gmail >> /tmp/DNA.MMT.BinoSpec.log 2>&1
+     5-59/5 0-8 * * * bash /var/www/ARTN-DNA/bin/DNA.sh --tel=Vatt   --ins=Vatt4k   --iso=`date --date="yesterday" +\%Y\%m\%d` --gmail >> /tmp/DNA.Vatt.Vatt4k.log 2>&1
     ```
 
 ### RE-PROCESSING PREVIOUS DATA

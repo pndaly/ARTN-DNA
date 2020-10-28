@@ -13,7 +13,7 @@ from sqlalchemy.orm import sessionmaker
 # noinspection PyUnresolvedReferences,PyUnresolvedReferences,PyUnresolvedReferences,PyUnresolvedReferences
 from src import ARTN_ZERO_ISO, ARTN_ZERO_MJD, ARTN_ENCODE_DICT, ARTN_DECODE_DICT
 # noinspection PyUnresolvedReferences,PyUnresolvedReferences,PyUnresolvedReferences,PyUnresolvedReferences
-from src import encode_verboten, decode_verboten, get_iso
+from src import encode_verboten, decode_verboten, get_iso, iso_to_mjd
 # noinspection PyUnresolvedReferences,PyUnresolvedReferences,PyUnresolvedReferences
 from src.models.Models import ObsReq, obsreq_filters, User, user_filters
 
@@ -43,11 +43,11 @@ __doc__ = """
 DNA_TGZ_DIR = '/var/www/ARTN-ORP/instance/files'
 DNA_ISO_MATCH = re.compile(r'\d{8}')
 DNA_LOG_CLR_FMT = \
-    '%(log_color)s%(asctime)-20s %(levelname)-9s %(filename)-15s %(funcName)-15s line:%(lineno)-5d Message: %(message)s'
+    '%(log_color)s%(asctime)-20s %(levelname)-9s %(filename)-15s line:%(lineno)-5d %(message)s'
 DNA_LOG_CSL_FMT = \
-    '%(asctime)-20s %(levelname)-9s %(filename)-15s %(funcName)-15s line:%(lineno)-5d Message: %(message)s'
+    '%(asctime)-20s %(levelname)-9s %(filename)-15s line:%(lineno)-5d %(message)s'
 DNA_LOG_FIL_FMT = \
-    '%(asctime)-20s %(levelname)-9s %(filename)-15s %(funcName)-15s line:%(lineno)-5d Message: %(message)s'
+    '%(asctime)-20s %(levelname)-9s %(filename)-15s line:%(lineno)-5d %(message)s'
 DNA_LOG_LEVELS = ['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL']
 DNA_LOG_WWW_DIR = '/var/www/ARTN-DNA/logs'
 DNA_LOG_MAX_BYTES = 9223372036854775807
@@ -568,7 +568,7 @@ def dna(_dna_dir=def_dna_dir, _dna_ins=def_dna_ins, _dna_iso=def_dna_iso, _dna_j
                         _q.completed = True
                         _iso = get_iso()
                         _q.completed_iso = _iso
-                        _q.completed_mjd = mjd_to_iso(_iso)
+                        _q.completed_mjd = iso_to_mjd(_iso)
                         try:
                             dna_db.commit()
                         except Exception as _e:
