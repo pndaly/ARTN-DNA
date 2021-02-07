@@ -1,4 +1,4 @@
-#!/usr/bin/env python3.7
+#!/usr/bin/env python3
 
 
 # +
@@ -209,6 +209,7 @@ class DnaLogger(object):
     def level(self, level=''):
         self.__level = level.upper() if \
             (isinstance(level, str) and level.strip() != '' and level.upper() in DNA_LOG_LEVELS) else DNA_LOG_LEVELS[0]
+
 
 # +
 # variable(s)
