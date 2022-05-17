@@ -25,9 +25,9 @@ __pycache__
 .idea
 
 # +
-# old stuff
+# local stuff
 # -
-cron/DNA.old.sh
+etc/DNA.sh
 
 # +
 # OS
