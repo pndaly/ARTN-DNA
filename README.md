@@ -10,11 +10,16 @@ This is not a web application although it runs under the www-data account!
    - Python3.8
 
 ### SET UP:
+
     ```bash
      % cd /var/www/
      % git clone https://github.com/pndaly/ARTN-DNA.git
      % cd ARTN-DNA
      % mkdir logs
+     % cd etc
+     % cp DNA.template.sh DNA.sh
+     <edit DNA.sh to reflect mail credentials>
+     % cd ..
      % chown -R www-data:www-data /var/www/ARTN-DNA
     ```
     
