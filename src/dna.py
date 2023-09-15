@@ -15,7 +15,8 @@ from sqlalchemy.orm import sessionmaker
 # noinspection PyUnresolvedReferences,PyUnresolvedReferences,PyUnresolvedReferences,PyUnresolvedReferences
 from src import encode_verboten, decode_verboten, get_iso, iso_to_mjd
 # noinspection PyUnresolvedReferences,PyUnresolvedReferences,PyUnresolvedReferences
-from src.models.Models import ObsReq, obsreq_filters, User, user_filters
+# from src.models.Models import ObsReq, obsreq_filters, User, user_filters
+from src.models.Models import ObsReq2, obsreq2_filters, User, user_filters
 
 import argparse
 import json
@@ -33,7 +34,7 @@ import tarfile
 # doc string
 # -
 __doc__ = """
-    % python3.7 dna.py --help
+    % python3 dna.py --help
 """
 
 
@@ -51,11 +52,7 @@ DNA_LOG_FIL_FMT = \
 DNA_LOG_LEVELS = ['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL']
 DNA_LOG_WWW_DIR = '/var/www/ARTN-DNA/logs'
 DNA_LOG_MAX_BYTES = 9223372036854775807
-DNA_MONT4K_SIZES = [
-    2880, 11520, 14400, 20480, 49152, 57600, 256000, 358400, 432128, 
-    655360, 2206080, 3841920, 3856320, 3859200, 3862080, 3864960, 3867840, 
-    7704000, 14904000, 14906880, 14921280
-]
+DNA_MONT4K_SIZES = [2880, 11520, 14400, 20480, 49152, 57600, 256000, 358400, 432128, 655360, 2206080, 3841920, 3856320, 3859200, 3862080, 3864960, 3867840, 7704000, 14904000, 14906880, 14921280]
 DNA_MONT4K_TYPES = ['fit', 'fits', 'FIT', 'FITS']
 DNA_TGZ_OWNER = {'www-data': 33}
 DNA_TGZ_GROUP = {'www-data': 33}
@@ -236,21 +233,26 @@ def_dna_user = f''
 def dna_artn_ids(_file=''):
     """ returns IDs from FITS headers """
     # check input(s)
-    _gid, _oid, _tgt, _file = '', '', '', os.path.abspath(os.path.expanduser(f'{_file}'))
+    # _gid, _oid, _tgt, _file = '', '', '', os.path.abspath(os.path.expanduser(f'{_file}'))
+    _oid, _tgt, _file = '', '', os.path.abspath(os.path.expanduser(f'{_file}'))
     if not isinstance(_file, str) or _file.strip() == '' or not os.path.exists(f'{_file}'):
         dna_log.error(f'invalid input, _file={_file}')
-        return _gid, _oid, _tgt
+        # return _gid, _oid, _tgt
+        return _oid, _tgt
     # get header(s)
+    _hdulist = fits.open(f'{_file}')
     try:
-        _hdulist = fits.open(f'{_file}')
-        _gid = f"{_hdulist[0].header['ARTNGID']}"
+        # _gid = f"{_hdulist[0].header['ARTNGID']}"
         _oid = f"{_hdulist[0].header['ARTNOID']}"
         _tgt = f"{_hdulist[0].header['TARGET']}"
-        _hdulist.close()
     except Exception as _e:
         dna_log.error(f'failed to get fits header(s), error={_e}')
+    else:
+        _hdulist.close()
+
     # return
-    return _gid, _oid, _tgt
+    # return _gid, _oid, _tgt
+    return _oid, _tgt
 
 
 # +
@@ -366,6 +368,7 @@ def dna_seek(_path='', _type=''):
     # return dictionary of results
     try:
         return {f'{_k}': os.stat(f'{_k}').st_size for _k in _fw if not os.path.islink(f'{_k}') and
+                'stitched' not in _k and
                 os.path.exists(f'{_k}') and _k.endswith(f'{_type}')}
     except Exception:
         return {}
@@ -476,13 +479,20 @@ def dna(_dna_dir=def_dna_dir, _dna_ins=def_dna_ins, _dna_iso=def_dna_iso, _dna_j
         dna_json = []
 
     dna_log.info(f'loading previous GIDs and OIDs')
-    _gid_dict = {}
+    # _gid_dict = {}
+    # for _e in dna_json:
+    #     if 'gid' in _e:
+    #         if _e['gid'] not in _gid_dict:
+    #             _gid_dict[_e['gid']] = [f"{_e['file']}"]
+    #         else:
+    #             _gid_dict[_e['gid']].append(f"{_e['file']}")
+    _oid_dict = {}
     for _e in dna_json:
-        if 'gid' in _e:
-            if _e['gid'] not in _gid_dict:
-                _gid_dict[_e['gid']] = [f"{_e['file']}"]
+        if 'oid' in _e:
+            if _e['oid'] not in _oid_dict:
+                _oid_dict[_e['oid']] = [f"{_e['file']}"]
             else:
-                _gid_dict[_e['gid']].append(f"{_e['file']}")
+                _oid_dict[_e['oid']].append(f"{_e['file']}")
 
     # +
     # process
@@ -510,35 +520,48 @@ def dna(_dna_dir=def_dna_dir, _dna_ins=def_dna_ins, _dna_iso=def_dna_iso, _dna_j
             _user = ''
             _email = ''
 
-            # if group_id, observation_id or _size is invalid, continue
-            if _obstype == 'object':
-                _gid, _oid, _tgt = dna_artn_ids(f'{_file}')
-                if (isinstance(_gid, str) and _gid.strip() == '') or \
-                   (isinstance(_oid, str) and _oid.strip() == '') or \
-                   _size not in DNA_MONT4K_SIZES:
-                    dna_log.error(f'invalid headers or size, _file={_file}, _gid={_gid}, '
-                                  f'_oid={_oid}, _tgt={_tgt}, _size={_size}')
+            # if observation_id or _size is invalid, continue
+            _oid, _tgt = dna_artn_ids(f'{_file}')
+            if _tgt == 2:
+                # _gid = f"{os.path.basename(_file).replace('-', '').replace('.', '').lower()}gid"
+                _oid = f"{os.path.basename(_file).replace('-', '').replace('.', '').lower()}oid"
+                _tgt = 'flat'
+                _user = 'rts2'
+                _email = 'rts2.operator@gmail.com'
+            elif _obstype == 'object':
+                #if (isinstance(_gid, str) and _gid.strip() == '') or \
+                #   (isinstance(_oid, str) and _oid.strip() == '') or \
+                # _gid, _oid, _tgt = dna_artn_ids(f'{_file}')
+                if (isinstance(_oid, str) and _oid.strip() == '') or _size not in DNA_MONT4K_SIZES:
+                    #dna_log.error(f'invalid headers or size, _file={_file}, _gid={_gid}, '
+                    #              f'_oid={_oid}, _tgt={_tgt}, _size={_size}')
+                    dna_log.error(f'invalid headers or size, _file={_file}, _oid={_oid}, _tgt={_tgt}, _size={_size}')
                     continue
             else:
-                _gid = f"{os.path.basename(_file).replace('-', '').replace('.', '').lower()}gid"
+                # _gid = f"{os.path.basename(_file).replace('-', '').replace('.', '').lower()}gid"
                 _oid = f"{os.path.basename(_file).replace('-', '').replace('.', '').lower()}oid"
                 _tgt = _obstype
                 _user = 'rts2'
                 _email = 'rts2.operator@gmail.com'
 
             # populate dictionary with this file
-            if f'{_gid}' not in _gid_dict:
-                _gid_dict[f'{_gid}'] = [f'{_file}']
+            # if f'{_gid}' not in _gid_dict:
+            #     _gid_dict[f'{_gid}'] = [f'{_file}']
+            # else:
+            #     _gid_dict[f'{_gid}'].append(f'{_file}')
+            # dna_log.debug(f'_gid_dict={_gid_dict}')
+            if f'{_oid}' not in _oid_dict:
+                _oid_dict[f'{_oid}'] = [f'{_file}']
             else:
-                _gid_dict[f'{_gid}'].append(f'{_file}')
-            dna_log.debug(f'_gid_dict={_gid_dict}')
+                _oid_dict[f'{_oid}'].append(f'{_file}')
+            dna_log.debug(f'_oid_dict={_oid_dict}')
 
             # create new entry
             _element = {
                 'file': f'{_file}',
                 'user': f'{_user}',
                 'email': f'{_email}',
-                'gid': f'{_gid}',
+                # 'gid': f'{_gid}',
                 'oid': f'{_oid}',
                 'tgt': f'{_tgt}',
                 'size': int(_size),
@@ -549,8 +572,10 @@ def dna(_dna_dir=def_dna_dir, _dna_ins=def_dna_ins, _dna_iso=def_dna_iso, _dna_j
             # query obsreq database(s)
             _obsreq = None
             try:
-                _obsreq = dna_db.query(ObsReq)
-                _obsreq = obsreq_filters(_obsreq, {'group_id': f'{_gid}', 'observation_id': f'{_oid}'})
+                # _obsreq = dna_db.query(ObsReq)
+                _obsreq = dna_db.query(ObsReq2)
+                # _obsreq = obsreq_filters(_obsreq, {'group_id': f'{_gid}', 'observation_id': f'{_oid}'})
+                _obsreq = obsreq2_filters(_obsreq, {'observation_id': f'{_oid}'})
             except Exception as _e:
                 dna_log.warning(f'failed to query obsreq table, error={_e}')
             else:
@@ -563,7 +588,8 @@ def dna(_dna_dir=def_dna_dir, _dna_ins=def_dna_ins, _dna_iso=def_dna_iso, _dna_j
                     _element['user'] = _q.username
 
                     # tell user (if desired)
-                    if len(_gid_dict[f'{_gid}']) == _q.num_exp:
+                    # if len(_gid_dict[f'{_gid}']) == _q.num_exp:
+                    if _q.percent_completed == 100.0:
 
                         # increment counter and save if complete
                         _q.completed = True
@@ -596,10 +622,10 @@ def dna(_dna_dir=def_dna_dir, _dna_ins=def_dna_ins, _dna_iso=def_dna_iso, _dna_j
                                 os.path.expanduser(
                                     os.path.join(DNA_TGZ_DIR,
                                                  f'{_dna_tel}.{_dna_ins}.{_dna_iso}.{_u.username}.{_q.rts2_id}.tgz')))
-                            if _gid_dict[f'{_gid}'] is not []:
+                            if _oid_dict[f'{_oid}'] is not []:
                                 dna_log.info(f'creating archive {_tgz}')
                                 with tarfile.open(f'{_tgz}', mode='w:gz') as _wf:
-                                    for _fz in _gid_dict[f'{_gid}']:
+                                    for _fz in _oid_dict[f'{_oid}']:
                                         dna_log.info(f'adding {_fz} to {_tgz}')
                                         _wf.add(f'{_fz}')
 
@@ -652,7 +678,8 @@ def dna(_dna_dir=def_dna_dir, _dna_ins=def_dna_ins, _dna_iso=def_dna_iso, _dna_j
                                     dna_log.error(f'failed to send gmail, error={e}')
             finally:
                 # add it to the json data structure
-                if all(_k in _element for _k in ('file', 'size', 'gid', 'oid', 'tgt', 'email', 'user', 'timestamp')):
+                # if all(_k in _element for _k in ('file', 'size', 'gid', 'oid', 'tgt', 'email', 'user', 'timestamp')):
+                if all(_k in _element for _k in ('file', 'size', 'oid', 'tgt', 'email', 'user', 'timestamp')):
                     dna_log.info(f'processed {_element}')
                     dna_json.append(_element)
                 else:
